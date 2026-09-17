@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+      - run: uv lock --check
+      - run: uv sync --all-extras
+      - run: uv run ruff check .
+      - run: uv run pytest
+
+  audit:
+    # Известные уязвимости в зафиксированных зависимостях (OSV-Scanner читает
+    # uv.lock нативно). Dependabot открывает PR на обновление; эта джоба
+    # роняет билд, пока их не смёржат. Локально: `osv-scanner --lockfile=uv.lock`.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google/osv-scanner-action/osv-scanner-action@v2.6.0
+        with:
+          scan-args: |-
+            --lockfile=uv.lock

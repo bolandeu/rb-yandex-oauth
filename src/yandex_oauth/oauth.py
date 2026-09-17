@@ -11,12 +11,12 @@ import httpx
 from .errors import CliError
 
 AUTHORIZE_URL = "https://oauth.yandex.ru/authorize"
-TOKEN_URL = "https://oauth.yandex.ru/token"
+TOKEN_URL = "https://oauth.yandex.ru/token"  # noqa: S105 — URL, не пароль
 NEW_APP_URL = "https://oauth.yandex.ru/client/new"
 
 # OAuth-приложение одно на все Яндекс-инструменты — переменные без префикса CLI.
 CLIENT_ID_ENV = "YANDEX_CLIENT_ID"
-CLIENT_SECRET_ENV = "YANDEX_CLIENT_SECRET"
+CLIENT_SECRET_ENV = "YANDEX_CLIENT_SECRET"  # noqa: S105 — имя env-переменной, не пароль
 
 
 @dataclass(frozen=True)
