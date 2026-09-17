@@ -1,10 +1,11 @@
 """Учётные данные в keychain ОС + переменные окружения.
 
 «Учётные данные» — небольшой словарь именованных полей, хранящийся одним
-JSON-блобом на провайдера. Пространство имён — имя CLI из профиля:
-запись keychain `<cli>:<provider>`, переменные окружения `<CLI>_<PROVIDER>_<FIELD>`
-(например YM_YANDEX_TOKEN). Переменные окружения переопределяют поля из
-keychain по одному — CI может подменить ротированный токен, не трогая остальное.
+JSON-блобом на провайдера. Пространство имён общее для всех инструментов
+(`Profile.keychain_namespace`, по умолчанию `yandex-oauth`): запись keychain
+`yandex-oauth:<provider>`, переменные окружения `YANDEX_OAUTH_<PROVIDER>_<FIELD>`.
+Переменные окружения переопределяют поля из keychain по одному — CI может
+подменить ротированный токен, не трогая остальное.
 """
 
 from __future__ import annotations
@@ -25,11 +26,16 @@ class CredentialStore:
 
     # --- имена ---------------------------------------------------------------
 
+    @property
+    def namespace(self) -> str:
+        return self.profile.keychain_namespace
+
     def service_name(self, provider: str) -> str:
-        return f"{self.profile.cli_name}:{provider}"
+        return f"{self.namespace}:{provider}"
 
     def env_var_name(self, provider: str, field: str) -> str:
-        return f"{self.profile.cli_name.upper()}_{provider.upper()}_{field.upper()}"
+        prefix = self.namespace.upper().replace("-", "_")
+        return f"{prefix}_{provider.upper()}_{field.upper()}"
 
     # --- набор полей -----------------------------------------------------------
 

@@ -15,7 +15,7 @@ from types import ModuleType
 
 import typer
 
-from . import dotenv, oauth
+from . import oauth
 from .errors import CliError, InvalidArguments
 from .profile import Profile
 from .token import TokenStore, _now
@@ -57,11 +57,6 @@ def _ask(text: str, hide: bool = False) -> str:
     if not raw:
         raise typer.Abort()
     return re.sub(r"[^\x20-\x7e]", "", raw.decode("utf-8", errors="ignore")).strip()
-
-
-def _confirm(text: str) -> bool:
-    """Да/нет через _ask; пустой ответ (Enter) — «да»."""
-    return _ask(f"{text} [Y/n]").lower() in ("", "y", "yes")
 
 
 def make_auth_app(
@@ -156,22 +151,11 @@ def make_auth_app(
 
         bag = store.store_token_set(token_set, cid, secret)
 
-        # Токен из .env (→ .env.shared) перекроет только что сохранённый в keychain —
-        # предложим обновить файл (интерактивно) или сообщим об этом.
-        shadowed_by = dotenv.PATH if dotenv.provided(profile.token_env) else None
-        updated_file = None
-        if shadowed_by and interactive and not ctx.obj.get("json"):
-            real = shadowed_by.resolve()
-            if _confirm(f"{profile.token_env} задан в {real} и имеет приоритет над keychain. Обновить его там?"):
-                updated_file = dotenv.update_line(shadowed_by, profile.token_env, token_set.access_token)
-
         payload = {
             "provider": profile.provider,
             "method": method,
             "stored": "keychain",
             **_describe(bag),
-            "shadowed_by_dotenv": str(shadowed_by) if shadowed_by and not updated_file else None,
-            "dotenv_updated": str(updated_file) if updated_file else None,
         }
 
         def render(d: dict) -> None:
@@ -183,24 +167,17 @@ def make_auth_app(
                 )
             else:
                 human.echo("[yellow]Срок действия неизвестен, автообновление невозможно (токен вставлен вручную).[/yellow]")
-            if updated_file:
-                human.echo(f"[green]{profile.token_env} обновлён в {updated_file}.[/green]")
-            elif shadowed_by:
-                human.echo(
-                    f"\n[yellow]Внимание:[/yellow] {profile.token_env} в {shadowed_by.resolve()} имеет приоритет над keychain.\n"
-                    f"Обновите его там вручную, иначе будет использоваться старый токен:\n"
-                    f"  {profile.token_env}={token_set.access_token}"
-                )
 
         output.emit_success(ctx, payload, render)
 
     login.__doc__ = f"""Получить OAuth-токен и сохранить в keychain вместе с refresh_token — дальше он обновляется сам.
 
-    Без опций возьмёт client_id/client_secret приложения из окружения
-    (${CLIENT_ID_ENV}/${CLIENT_SECRET_ENV}, в т.ч. из .env → .env.shared) или из
-    keychain с прошлого входа, откроет браузер и попросит код; если их нет —
-    спросит. Старый токен из ${profile.token_env} при этом не копируется:
-    login нужен, чтобы получить новый.
+    Токен общий для всех Яндекс-инструментов (один слот keychain): вход в одном
+    из них авторизует и остальные. Без опций возьмёт client_id/client_secret
+    приложения из окружения (${CLIENT_ID_ENV}/${CLIENT_SECRET_ENV}) или из keychain
+    с прошлого входа, откроет браузер и попросит код; если их нет — спросит.
+    Старый токен из ${profile.token_env} при этом не копируется: login нужен,
+    чтобы получить новый.
 
     \b
     Порядок источников: --token → --client-id/--client-secret →
@@ -212,9 +189,6 @@ def make_auth_app(
       {profile.cli_name} auth login --token y0_AgAAAA...     # вставить готовый токен (обновляться не будет)
       {profile.cli_name} auth login --token 'https://oauth.yandex.ru/verification_code#access_token=...&expires_in=...'
       {profile.cli_name} auth login --non-interactive        # скопировать ${profile.token_env} в keychain (CI)
-
-    Если ${profile.token_env} задан в .env (→ .env.shared), файл имеет приоритет над
-    keychain — после получения токена команда предложит обновить строку в файле.
 
     Создать приложение: {oauth.NEW_APP_URL}
     Нужные права: {profile.scopes}
@@ -300,7 +274,7 @@ def make_auth_app(
 
         output.emit_success(ctx, payload, render)
 
-    auth_status.__doc__ = f"""Есть ли токен, откуда он (argument / env / dotenv / keychain), срок действия и автообновление.
+    auth_status.__doc__ = f"""Есть ли токен, откуда он (argument / env / keychain), срок действия и автообновление.
 
     \b
       {profile.cli_name} auth status --json

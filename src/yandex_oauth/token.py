@@ -12,7 +12,7 @@ import os
 import re
 from datetime import UTC, datetime, timedelta
 
-from . import dotenv, oauth
+from . import oauth
 from .credentials import CredentialStore
 from .errors import CliError
 from .profile import Profile
@@ -45,11 +45,11 @@ class TokenStore:
         return os.getenv(self.profile.token_env)
 
     def source(self, explicit: str | None = None) -> str | None:
-        """Откуда сейчас берётся токен: 'argument' | 'env' | 'dotenv' | 'keychain' | None (без сети)."""
+        """Откуда сейчас берётся токен: 'argument' | 'env' | 'keychain' | None (без сети)."""
         if explicit:
             return "argument"
         if self.env_token():
-            return "dotenv" if dotenv.provided(self.profile.token_env) else "env"
+            return "env"
         if self.stored().get("token"):
             return "keychain"
         return None
@@ -111,8 +111,9 @@ class TokenStore:
     # --- для клиента API ---------------------------------------------------------------
 
     def resolve(self, explicit: str | None = None) -> tuple[str | None, bool]:
-        """(токен, можно ли обновлять). Порядок: аргумент → env (в т.ч. .env) → keychain.
+        """(токен, можно ли обновлять). Порядок: аргумент → env → keychain.
 
+        Keychain общий для всех инструментов (один вход — все инструменты).
         Токен из keychain обновляется заранее (истекает в ближайшие 30 дней или
         старше 90 дней). Если обновить не удалось, а токен ещё жив — используем старый.
         """

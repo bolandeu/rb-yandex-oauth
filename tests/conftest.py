@@ -11,7 +11,7 @@ from yandex_oauth.auth_command import make_auth_app
 from . import fake_output
 
 PROFILE = Profile(cli_name="demo", token_env="YANDEX_DEMO_TOKEN", scopes="demo:read", service="Демо")
-KEY = ("demo:yandex", "yandex")
+KEY = ("yandex-oauth:yandex", "yandex")  # общий слот для всех инструментов
 
 
 @pytest.fixture(autouse=True)
@@ -30,10 +30,8 @@ def fake_keyring(monkeypatch: pytest.MonkeyPatch) -> dict[tuple[str, str], str]:
     monkeypatch.setattr("yandex_oauth.credentials.keyring.set_password", fake_set_password)
     monkeypatch.setattr("yandex_oauth.credentials.keyring.get_password", fake_get_password)
     monkeypatch.setattr("yandex_oauth.credentials.keyring.delete_password", fake_delete_password)
-    for var in ("YANDEX_DEMO_TOKEN", "DEMO_YANDEX_TOKEN", "YANDEX_CLIENT_ID", "YANDEX_CLIENT_SECRET"):
+    for var in ("YANDEX_DEMO_TOKEN", "YANDEX_OAUTH_YANDEX_TOKEN", "YANDEX_CLIENT_ID", "YANDEX_CLIENT_SECRET"):
         monkeypatch.delenv(var, raising=False)
-    monkeypatch.setattr("yandex_oauth.dotenv.PATH", None)
-    monkeypatch.setattr("yandex_oauth.dotenv.KEYS", frozenset())
     return store
 
 

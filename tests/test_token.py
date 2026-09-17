@@ -82,28 +82,29 @@ class TestResolve:
         assert store.resolve("arg") == ("arg", False)
 
     def test_field_env_override(self, fake_keyring, store, monkeypatch):
-        """<CLI>_YANDEX_TOKEN переопределяет поле token из keychain."""
+        """YANDEX_OAUTH_YANDEX_TOKEN переопределяет поле token из общего keychain-набора."""
         _bag(fake_keyring, expires_in_days=None, refreshable=False)
-        monkeypatch.setenv("DEMO_YANDEX_TOKEN", "field-env")
+        monkeypatch.setenv("YANDEX_OAUTH_YANDEX_TOKEN", "field-env")
         assert store.resolve() == ("field-env", False)
+
+    def test_keychain_slot_is_shared_between_profiles(self, fake_keyring, store):
+        """Один вход — все инструменты: другой профиль читает тот же слот."""
+        from yandex_oauth import CredentialStore, Profile, TokenStore
+
+        _bag(fake_keyring, expires_in_days=200)
+        other = Profile(cli_name="other", token_env="YANDEX_OTHER_TOKEN", scopes="x", service="Другой")
+        assert TokenStore(other, CredentialStore(other)).resolve() == ("old", True)
 
 
 class TestSource:
     def test_none(self, store):
         assert store.source() is None
 
-    def test_argument_env_dotenv_keychain(self, fake_keyring, store, monkeypatch, tmp_path):
-        from yandex_oauth import dotenv
-
+    def test_argument_env_keychain(self, fake_keyring, store, monkeypatch):
         assert store.source("x") == "argument"
         fake_keyring[KEY] = json.dumps({"token": "kc"})
         assert store.source() == "keychain"
-        env_file = tmp_path / ".env"
-        env_file.write_text("YANDEX_DEMO_TOKEN=from-file\n")
-        dotenv.load(env_file)
-        assert store.source() == "dotenv"
         monkeypatch.setenv("YANDEX_DEMO_TOKEN", "real")
-        monkeypatch.setattr("yandex_oauth.dotenv.KEYS", frozenset())
         assert store.source() == "env"
 
 

@@ -1,20 +1,19 @@
 # yandex-oauth
 
-Общая OAuth-авторизация Яндекса для CLI-инструментов (`ym`, `ywm`, …). Один Яндекс-аккаунт и одно OAuth-приложение — одна схема хранения и обновления токена для всех инструментов, без дублирования кода.
+Общая OAuth-авторизация Яндекса для CLI-инструментов (`ym`, `ywm`, …). Один Яндекс-аккаунт и одно OAuth-приложение — **один токен в общем слоте keychain** (`yandex-oauth:yandex`) для всех инструментов: вход в любом из них авторизует остальные, токен обновляется сам. Без дублирования кода и без `.env`-файлов.
 
 ## Что даёт
 
 | Модуль | Назначение |
 |---|---|
-| `Profile` | Чем инструмент отличается: имя CLI (`ym`), env-переменная токена (`YANDEX_METRIKA_TOKEN`), scopes, название сервиса |
-| `CredentialStore(profile)` | Keychain ОС (`<cli>:yandex`) + переменные окружения `<CLI>_YANDEX_<FIELD>` |
+| `Profile` | Чем инструмент отличается: имя CLI (`ym`), env-переменная токена (`YANDEX_METRIKA_TOKEN`), scopes, название сервиса. Слот keychain общий (`keychain_namespace="yandex-oauth"`) |
+| `CredentialStore(profile)` | Keychain ОС (`yandex-oauth:yandex`) + переопределение полей через `YANDEX_OAUTH_YANDEX_<FIELD>` |
 | `TokenStore(profile, credentials)` | Где лежит токен, срок действия, автообновление по refresh_token (за 30 дней до истечения, не реже раза в 90 дней), `retry_token_after()` для повтора запроса при 403 «токен протух» |
 | `oauth` | Ссылка на согласие, обмен кода на токен, refresh, разбор «ручного» адреса `verification_code#access_token=…` |
-| `dotenv` | Запасной источник переменных: `.env` рядом с инструментом → общий `~/Projects/credentials/.env.shared`; помнит, какие ключи пришли из файла |
 | `make_auth_app(profile, store, output, check=…)` | Готовая Typer-команда `auth login / refresh / logout / status [--check]` |
 
-Порядок поиска токена везде одинаковый: `--token` → `$<TOKEN_ENV>` (в т.ч. из `.env`) → keychain.
-`auth login` без `--token` всегда получает **новый** токен (OAuth через браузер); старый из окружения не копируется. Если токен пришёл из `.env.shared`, после входа команда предложит обновить строку в файле — файл имеет приоритет над keychain.
+Порядок поиска токена везде одинаковый: `--token` → `$<TOKEN_ENV>` (CI/скрипты) → общий keychain.
+`auth login` без `--token` всегда получает **новый** токен (OAuth через браузер) и кладёт его в общий слот; старый из окружения не копируется (только под `--non-interactive`). Файлы `.env` не читаются: секреты живут только в keychain и переменных окружения.
 
 Репозиторий: https://github.com/bolandeu/yandex-oauth. Инструменты подключают его как path-зависимость, поэтому клонировать нужно рядом с ними: `~/Projects/tools/yandex-oauth`.
 

@@ -100,42 +100,6 @@ class TestLogin:
         assert _ask("Client ID") == "2c8a9c2d"
 
 
-class TestDotenvShadow:
-    def _env(self, tmp_path):
-        from yandex_oauth import dotenv
-
-        real = tmp_path / ".env.shared"
-        real.write_text("OTHER=1\nYANDEX_DEMO_TOKEN=stale\n")
-        link = tmp_path / ".env"
-        link.symlink_to(real)
-        dotenv.load(link)
-        return real
-
-    def test_confirm_updates_file(self, app, runner, fake_keyring, tmp_path):
-        real = self._env(tmp_path)
-        result = runner.invoke(app, ["auth", "login", "--token", "fresh"], input="\n")  # Enter = да
-        assert result.exit_code == 0, result.stdout
-        assert real.read_text() == "OTHER=1\nYANDEX_DEMO_TOKEN=fresh\n"
-        assert "обновлён" in result.stdout
-        assert json.loads(fake_keyring[KEY])["token"] == "fresh"
-
-    def test_decline_prints_line(self, app, runner, tmp_path):
-        real = self._env(tmp_path)
-        result = runner.invoke(app, ["auth", "login", "--token", "fresh"], input="n\n")
-        assert result.exit_code == 0, result.stdout
-        assert real.read_text() == "OTHER=1\nYANDEX_DEMO_TOKEN=stale\n"
-        assert "YANDEX_DEMO_TOKEN=fresh" in result.stdout
-
-    def test_json_mode_reports_without_prompt(self, app, runner, tmp_path):
-        real = self._env(tmp_path)
-        result = runner.invoke(app, ["auth", "login", "--token", "fresh", "--json"])
-        assert result.exit_code == 0, result.stdout
-        data = _json(result)
-        assert data["shadowed_by_dotenv"] == str(tmp_path / ".env") and data["dotenv_updated"] is None
-        assert "fresh" not in data.values()
-        assert real.read_text().endswith("=stale\n")
-
-
 class TestRefreshLogoutStatus:
     def test_refresh_command(self, app, runner, fake_keyring):
         fake_keyring[KEY] = json.dumps({"token": "old", "refresh_token": "rt", "client_id": "c", "client_secret": "s"})
