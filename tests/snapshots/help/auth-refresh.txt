@@ -1,0 +1,16 @@
+
+ Usage: demo auth refresh [OPTIONS]
+
+ Принудительно обновить токен по refresh_token и перезаписать keychain (без браузера).
+
+ Обычно не нужно: CLI сам обновляет токен за 30 дней до истечения и при 403 от API.
+ Полезно для cron/агентов.
+
+ Example: demo auth refresh --json
+
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
+│ --json           Emit machine-readable JSON output.                                              │
+│ --quiet          Suppress non-essential output.                                                  │
+│ --help           Show this message and exit.                                                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+

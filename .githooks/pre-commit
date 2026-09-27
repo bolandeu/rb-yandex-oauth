@@ -1,0 +1,6 @@
+#!/bin/sh
+# Versioned pre-commit hook, active via `git config core.hooksPath .githooks`
+# (scripts/install_hooks.sh; the Claude Code SessionStart hook sets it too).
+root="$(git rev-parse --show-toplevel)"
+python3 "$root/scripts/check_command_docstrings.py" || exit 1  # blocks: --help must match the code
+python3 "$root/scripts/check_changelog_fragment.py"             # warns only

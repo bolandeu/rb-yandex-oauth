@@ -82,6 +82,19 @@ class CredentialsIncomplete(CliError):
         )
 
 
+class CredentialsUnhealthy(CliError):
+    """`auth status` нашёл проблему (§8): отчёт выводится целиком, рядом — эта ошибка, exit 3."""
+
+    def __init__(self, profile: Profile, problems: dict[str, str]) -> None:
+        listed = ", ".join(f"{provider} ({status})" for provider, status in problems.items())
+        super().__init__(
+            "CREDENTIALS_UNHEALTHY",
+            f"Учётные данные требуют внимания: {listed}.",
+            action=f"Подробности — в `message` каждой записи; войти заново: '{profile.login_cmd}'.",
+            exit_code=3,
+        )
+
+
 def _env(profile: Profile, field: str) -> str:
     """Имя переменной окружения поля общего слота: YANDEX_OAUTH_<PROVIDER>_<FIELD>."""
     prefix = profile.keychain_namespace.upper().replace("-", "_")

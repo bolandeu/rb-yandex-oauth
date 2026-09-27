@@ -10,9 +10,9 @@ import typer
 
 from yandex_oauth.errors import CliError
 
-JsonOption = typer.Option(False, "--json")
-QuietOption = typer.Option(False, "--quiet")
-NonInteractiveOption = typer.Option(False, "--non-interactive")
+JsonOption = typer.Option(False, "--json", help="Emit machine-readable JSON output.")
+QuietOption = typer.Option(False, "--quiet", help="Suppress non-essential output.")
+NonInteractiveOption = typer.Option(False, "--non-interactive", help="Never prompt; fail instead.")
 
 _printed: list[str] = []
 

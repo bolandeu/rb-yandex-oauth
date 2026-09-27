@@ -93,7 +93,7 @@ class TestStatus:
             }
         )
         entry = credential_status(store)
-        assert entry["source"] == "keychain" and entry["source_ref"] == "yandex-oauth:yandex"
+        assert entry["source"] == "keychain" and entry["source_ref"] == "keychain service yandex-oauth:yandex"
         assert entry["status"] == "unchecked" and entry["expires_at"].startswith("2099")
         assert entry["fields"] == ["token", "refresh_token", "client_id", "client_secret"]
 

@@ -6,6 +6,8 @@
 uv sync
 uv run pytest
 uv run ruff check . && uv run ruff format --check . && uv run ty check
+uv run scripts/release.py --check                 # весь гейт — перед каждым коммитом
+uv run pytest --snapshot-update                   # после правки docstring/help= команд auth — и прочитать diff
 uv run towncrier create +<slug>.<type>.md -c "…"   # фрагмент CHANGELOG на каждое заметное изменение
 uv run scripts/release.py patch|minor|major       # релиз с main: тег vX.Y.Z (версия только в теге)
 ```
@@ -17,12 +19,12 @@ uv run scripts/release.py patch|minor|major       # релиз с main: тег v
 **Source layout:** `src/yandex_oauth/`
 
 - `profile.py` — `Profile` (cli_name, token_env, scopes, service, provider, `keychain_namespace="yandex-oauth"`) — единственное, чем инструменты отличаются; слот keychain общий для всех (один вход — все инструменты)
-- `errors.py` — `CliError` (общий базовый класс: `output.guard` инструментов ловит именно его), `InvalidArguments`, `AuthRequired(profile)`, `CredentialStoreUnavailable(profile, reason)`
+- `errors.py` — `CliError` (общий базовый класс: `output.guard` инструментов ловит именно его), `InvalidArguments`, `AuthRequired(profile)`, `CredentialStoreUnavailable(profile, reason)`, `CredentialsUnhealthy(profile, problems)` (exit 3 у `auth status`)
 - `credentials.py` — `CredentialStore(profile)`: keychain `yandex-oauth:<provider>` через `keyring`, env-переопределение полей `YANDEX_OAUTH_<PROVIDER>_<FIELD>`
 - `oauth.py` — `TokenSet`, `authorize_url`, `parse_manual_token`, `exchange_code`, `refresh_access_token`, `app_credentials_from_env()` (`YANDEX_CLIENT_ID`/`YANDEX_CLIENT_SECRET` — общие для всех инструментов, без префикса)
 - `token.py` — `TokenStore(profile, credentials)`: `stored/source/resolve/refresh/store_token_set/retry_token_after/delete`; режим «только env» (`env_only()`: задан `YANDEX_OAUTH_YANDEX_REFRESH_TOKEN` или keychain недоступен) — токен в памяти процесса (`_memory`), keychain не пишется; константы `FIELDS`, `REFRESH_BEFORE` (30 дн.), `REFRESH_AFTER` (90 дн.), `INVALID_TOKEN_RE` (Вебмастер `INVALID_OAUTH_TOKEN`, Метрика `invalid_token`)
-- `status.py` — `credential_status/status_report/status_exit_code`: контракт `auth status --json` из §8 `~/Projects/tools/docs/standard-release.md` (форма покрыта тестом — менять = ломающее изменение)
-- `auth_command.py` — `make_auth_app(profile, store, output, check=None)`; `_ask` (вопросы в stderr, байтовый ввод, только печатный ASCII); интерактивные подсказки — тоже в stderr, stdout чист для `--json`
+- `status.py` — `health_check(store, check)` → `Health` (делегат для `Provider.health_check()` инструментов по шаблону: 10 с, маппинг ошибок, маскирование секретов) и `credential_status/status_report/status_problems/status_exit_code`: контракт `auth status --json` из §8 `~/Projects/tools/docs/standard-release.md` (форма покрыта `tests/test_status.py` — менять = ломающее изменение)
+- `auth_command.py` — `make_auth_app(profile, store, output, check=None)`; `_ask` (вопросы в stderr, байтовый ввод, только печатный ASCII); интерактивные подсказки — тоже в stderr, stdout чист для `--json`. Docstring'и команд — литеральные, с подстановками `{cli}`/`{token_env}`/… и строкой `Example:` (§7): их проверяют `scripts/check_command_docstrings.py` (хуки; glob адаптирован под `auth_command.py`), `tests/test_help.py` и снапшоты `tests/snapshots/help/`
 
 **Никаких `.env`:** секреты только в keychain и переменных окружения (пользовательское решение 2026-09-17 — `.env.shared` удалён). Порядок: `--token` → `$TOKEN_ENV` → env-режим (`YANDEX_OAUTH_YANDEX_REFRESH_TOKEN`) → keychain. Схема имён env — в README («Переменные окружения»).
 

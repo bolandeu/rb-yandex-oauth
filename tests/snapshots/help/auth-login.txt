@@ -1,0 +1,39 @@
+
+ Usage: demo auth login [OPTIONS]
+
+ Получить OAuth-токен и сохранить в keychain вместе с refresh_token — дальше он обновляется сам.
+
+ Токен общий для всех Яндекс-инструментов (один слот keychain): вход в одном
+ из них авторизует и остальные. Без опций возьмёт client_id/client_secret
+ приложения из окружения ($YANDEX_CLIENT_ID/$YANDEX_CLIENT_SECRET) или из keychain
+ с прошлого входа, откроет браузер и попросит код; если их нет — спросит.
+ Старый токен из $YANDEX_DEMO_TOKEN при этом не копируется: login нужен,
+ чтобы получить новый.
+
+
+ Порядок источников: --token → --client-id/--client-secret →
+ (только --non-interactive: $YANDEX_DEMO_TOKEN) → client_id/secret из
+ окружения или keychain → интерактивные вопросы.
+
+
+   demo auth login --token y0_AgAAAA...     # вставить готовый токен (обновляться не будет)
+   demo auth login --token
+ 'https://oauth.yandex.ru/verification_code#access_token=...&expires_in=...'
+   demo auth login --non-interactive        # скопировать $YANDEX_DEMO_TOKEN в keychain (CI)
+
+ Создать приложение: https://oauth.yandex.ru/client/new
+ Нужные права: demo:read
+
+ Example: demo auth login   # браузер → код → готово
+
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
+│ --token                  <str>  Готовый OAuth-токен или адрес …verification_code#access_token=…  │
+│                                 (без автообновления).                                            │
+│ --client-id              <str>  ID OAuth-приложения (или $YANDEX_CLIENT_ID).                     │
+│ --client-secret          <str>  Секрет приложения (или $YANDEX_CLIENT_SECRET).                   │
+│ --non-interactive               Never prompt; fail instead.                                      │
+│ --json                          Emit machine-readable JSON output.                               │
+│ --quiet                         Suppress non-essential output.                                   │
+│ --help                          Show this message and exit.                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+

@@ -11,7 +11,8 @@
 | `TokenStore(profile, credentials)` | Где лежит токен, срок действия, автообновление по refresh_token (за 30 дней до истечения, не реже раза в 90 дней), `retry_token_after()` для повтора запроса при 403 «токен протух» |
 | `oauth` | Ссылка на согласие, обмен кода на токен, refresh, разбор «ручного» адреса `verification_code#access_token=…` |
 | `make_auth_app(profile, store, output, check=…)` | Готовая Typer-команда `auth login / refresh / logout / status [--check]` |
-| `credential_status`, `status_report`, `status_exit_code` | Отчёт `auth status --json` по контракту §8 стандарта (`~/Projects/tools/docs/standard-release.md`): `source`, `status`, `expires_at`, без значений секретов |
+| `health_check(store, check)` → `Health` | Делегат для `Provider.health_check()` инструмента по шаблону cli-generator: `status` / `expires_at` / `quota` / `message` одинаково у всех Яндекс-инструментов (§8 стандарта `~/Projects/tools/docs/standard-release.md`); 10 с на проверку, 401/403 → `invalid`, сеть/429/5xx → `unreachable` |
+| `credential_status`, `status_report`, `status_problems`, `status_exit_code` | Отчёт `auth status --json` по §8 целиком (для `make_auth_app`): `source`, `source_ref`, `status`, `expires_at`, без значений секретов |
 
 Порядок поиска токена везде одинаковый: `--token` → `$<TOKEN_ENV>` (CI/скрипты) → `YANDEX_OAUTH_YANDEX_REFRESH_TOKEN` из окружения (режим «только env») → общий keychain.
 
@@ -38,10 +39,10 @@ Keychain недоступен (Linux без Secret Service, контейнер) 
 `pyproject.toml` инструмента:
 
 ```toml
-dependencies = ["yandex-oauth>=0.1,<0.2", ...]   # на 0.x минорная версия считается ломающей
+dependencies = ["yandex-oauth>=0.2,<0.3", ...]   # на 0.x минорная версия считается ломающей
 
 [tool.uv.sources]
-yandex-oauth = { git = "https://github.com/bolandeu/yandex-oauth", tag = "v0.1.0" }
+yandex-oauth = { git = "https://github.com/bolandeu/yandex-oauth", tag = "v0.2.0" }
 ```
 
 Не `branch = "main"` и не закоммиченный `path =`. Правки одновременно с инструментом — `uv pip install -e ../yandex-oauth` в его venv, без коммита. Переход на новый тег: `tag = "vNEW"` + `uv lock --upgrade-package yandex-oauth` + тесты инструмента, одним коммитом.
@@ -55,6 +56,13 @@ PROFILE = Profile(cli_name="ym", token_env="YANDEX_METRIKA_TOKEN", scopes="metri
 ```
 
 Тонкие модули инструмента (`core/oauth.py`, `core/token.py`, `credentials/manager.py`, `commands/auth.py`) реэкспортируют общий код, привязанный к профилю — см. `ym` или `ywm` как образец. `core/errors.py` инструмента импортирует `CliError`/`InvalidArguments`/`CredentialStoreUnavailable`/`AuthRequired` отсюда, чтобы `output.guard` ловил ошибки общего кода.
+
+`auth status [--check] --json` из `make_auth_app` — отчёт §8 в стандартном конверте: `ok: true` и отчёт при exit 0; при exit 3 — `ok: false`, `error` (`CREDENTIALS_UNHEALTHY`) и тот же отчёт. `tool` — `Profile.cli_name`, `version` — версия дистрибутива, который ставит console script с этим именем. Инструмент по шаблону cli-generator со своими `providers/` вместо этого делегирует проверку из `health_check()`:
+
+```python
+def health_check(self) -> Health:
+    return yandex_oauth.health_check(token_store.store, check=lambda: self.get_json("/management/v1/counters"))
+```
 
 Клиент API инструмента:
 
@@ -73,8 +81,11 @@ if not resp.is_success and self._refreshable:
 ```bash
 uv sync
 uv run pytest
-uv run ruff check . && uv run ruff format --check . && uv run ty check
+uv run scripts/release.py --check   # весь гейт: lock, ruff, ty, pytest, фрагмент, сборка wheel, osv-scanner
+scripts/install_hooks.sh            # один раз на клон: git-хуки из .githooks/ (сессии Claude Code — сами)
 ```
+
+Справка команд `auth` — это docstring'и в `auth_command.py` (подстановки `{cli}`, `{token_env}`… и обязательная строка `Example:`). Поменяли поведение команды — поменяйте её docstring в том же коммите: иначе остановят хуки (`.claude/settings.json`, `.githooks/pre-commit`, `scripts/check_command_docstrings.py`). Снапшоты справки для профиля `demo` — `tests/snapshots/help/`, обновление: `uv run pytest --snapshot-update` и прочитать diff.
 
 ## Версии и релизы
 

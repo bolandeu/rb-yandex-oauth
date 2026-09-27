@@ -22,7 +22,7 @@ class TestLogin:
         assert result.exit_code == 0, result.stdout
         bag = json.loads(fake_keyring[KEY])
         assert bag["token"] == "abc" and "refresh_token" not in bag
-        assert _json(runner.invoke(app, ["auth", "status", "--json"]))["source"] == "keychain"
+        assert _json(runner.invoke(app, ["auth", "status", "--json"]))["credentials"][0]["source"] == "keychain"
 
     def test_global_token_option(self, app, runner, fake_keyring):
         result = runner.invoke(app, ["--token", "glob", "auth", "login", "--json"])
@@ -133,16 +133,23 @@ class TestRefreshLogoutStatus:
         assert _json(result)["error"]["code"] == "TOKEN_NOT_REFRESHABLE"
 
     def test_status_without_token(self, app, runner):
-        data = _json(runner.invoke(app, ["auth", "status", "--json"]))
-        assert data["authenticated"] is False and data["source"] is None
+        result = runner.invoke(app, ["auth", "status", "--json"])
+        assert result.exit_code == 3
+        data = _json(result)
+        assert data["ok"] is False and data["error"]["code"] == "CREDENTIALS_UNHEALTHY"
+        assert data["credentials"][0]["status"] == "missing" and data["credentials"][0]["source"] == "missing"
 
     def test_status_check_valid_and_invalid(self, app, runner, fake_keyring):
         fake_keyring[KEY] = json.dumps({"token": "t"})
-        data = _json(runner.invoke(app, ["auth", "status", "--check", "--json"]))
-        assert data["valid"] is True and data["refreshable"] is False
+        result = runner.invoke(app, ["auth", "status", "--check", "--json"])
+        assert result.exit_code == 0
+        data = _json(result)
+        assert data["ok"] is True and "error" not in data and data["credentials"][0]["status"] == "ok"
         app.checks["raise"] = CliError("API_ERROR", "403 invalid", exit_code=1)
-        data = _json(runner.invoke(app, ["auth", "status", "--check", "--json"]))
-        assert data["valid"] is False and data["error"] == "403 invalid"
+        result = runner.invoke(app, ["auth", "status", "--check", "--json"])
+        assert result.exit_code == 3
+        entry = _json(result)["credentials"][0]
+        assert entry["status"] == "invalid" and entry["message"] == "403 invalid"
 
     def test_logout(self, app, runner, fake_keyring):
         runner.invoke(app, ["auth", "login", "--token", "abc"])

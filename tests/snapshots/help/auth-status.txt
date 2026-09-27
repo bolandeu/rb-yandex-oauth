@@ -1,0 +1,22 @@
+
+ Usage: demo auth status [OPTIONS]
+
+ Откуда берётся токен и работает ли он — отчёт в общей для всех инструментов форме. Значений не
+ печатает.
+
+ Без --check — только наличие и срок (`unchecked`, `missing`, `expired`), без сети.
+ Код выхода 0 — всё в порядке, 3 — токена нет, он истёк или API его не принимает.
+ --json — контракт для tools-watch (стандарт tools §8): `tool`, `version`,
+ `checked_at`, `credentials[]` с `provider`, `required`, `fields`, `source`,
+ `source_ref`, `status`, `expires_at`, `quota`, `message`; при коде 3 —
+ `ok: false` и `error` CREDENTIALS_UNHEALTHY рядом с отчётом.
+
+ Example: demo auth status --check --json
+
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
+│ --check          Проверить токен одним дешёвым запросом к API (не дольше 10 с).                  │
+│ --json           Emit machine-readable JSON output.                                              │
+│ --quiet          Suppress non-essential output.                                                  │
+│ --help           Show this message and exit.                                                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+

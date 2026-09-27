@@ -7,16 +7,18 @@ CLI-архитектуры), чтобы вывод, JSON-конверт и об�
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 import webbrowser
 from collections.abc import Callable
+from importlib import metadata
 from types import ModuleType
 
 import typer
 
-from . import oauth
-from .errors import CliError, InvalidArguments
+from . import oauth, status
+from .errors import CredentialsUnhealthy, InvalidArguments
 from .profile import Profile
 from .token import TokenStore, _now
 
@@ -71,9 +73,27 @@ def make_auth_app(
     check — необязательный живой запрос к API для `auth status --check`
     (например `lambda ctx: services.get_client(ctx).get_counters_sync()`);
     должен бросать CliError инструмента при отказе API.
+
+    Docstring'и команд — это их `--help`: подстановки `{cli}`, `{token_env}` и т.п.
+    заполняет `_help`, строка `Example:` обязательна (стандарт tools §7).
     """
     app = typer.Typer(help=f"OAuth-токен {profile.service}: вход, статус, обновление, выход.")
     human = output.human
+    placeholders = {
+        "{cli}": profile.cli_name,
+        "{token_env}": profile.token_env,
+        "{client_id_env}": CLIENT_ID_ENV,
+        "{client_secret_env}": CLIENT_SECRET_ENV,
+        "{new_app_url}": oauth.NEW_APP_URL,
+        "{scopes}": profile.scopes,
+    }
+
+    def _help(func: Callable) -> Callable:
+        doc = func.__doc__ or ""
+        for key, value in placeholders.items():
+            doc = doc.replace(key, value)
+        func.__doc__ = doc
+        return func
 
     def _describe(bag: dict) -> dict:
         """Срок действия и возможность автообновления — для status/login/refresh."""
@@ -101,6 +121,9 @@ def make_auth_app(
 
     # --- login ---------------------------------------------------------------------
 
+    @app.command("login")
+    @output.guard
+    @_help
     def login(
         ctx: typer.Context,
         token: str | None = typer.Option(
@@ -116,6 +139,30 @@ def make_auth_app(
         json_output: bool = output.JsonOption,
         quiet: bool = output.QuietOption,
     ) -> None:
+        """Получить OAuth-токен и сохранить в keychain вместе с refresh_token — дальше он обновляется сам.
+
+        Токен общий для всех Яндекс-инструментов (один слот keychain): вход в одном
+        из них авторизует и остальные. Без опций возьмёт client_id/client_secret
+        приложения из окружения (${client_id_env}/${client_secret_env}) или из keychain
+        с прошлого входа, откроет браузер и попросит код; если их нет — спросит.
+        Старый токен из ${token_env} при этом не копируется: login нужен,
+        чтобы получить новый.
+
+        \b
+        Порядок источников: --token → --client-id/--client-secret →
+        (только --non-interactive: ${token_env}) → client_id/secret из
+        окружения или keychain → интерактивные вопросы.
+
+        \b
+          {cli} auth login --token y0_AgAAAA...     # вставить готовый токен (обновляться не будет)
+          {cli} auth login --token 'https://oauth.yandex.ru/verification_code#access_token=...&expires_in=...'
+          {cli} auth login --non-interactive        # скопировать ${token_env} в keychain (CI)
+
+        Создать приложение: {new_app_url}
+        Нужные права: {scopes}
+
+        Example: {cli} auth login   # браузер → код → готово
+        """
         interactive = not (ctx.obj.get("non_interactive") or non_interactive)
         token, client_id, client_secret = (v.strip() or None if v else None for v in (token, client_id, client_secret))
         token = token or ctx.obj.get("token")
@@ -176,38 +223,23 @@ def make_auth_app(
 
         output.emit_success(ctx, payload, render)
 
-    login.__doc__ = f"""Получить OAuth-токен и сохранить в keychain вместе с refresh_token — дальше он обновляется сам.
-
-    Токен общий для всех Яндекс-инструментов (один слот keychain): вход в одном
-    из них авторизует и остальные. Без опций возьмёт client_id/client_secret
-    приложения из окружения (${CLIENT_ID_ENV}/${CLIENT_SECRET_ENV}) или из keychain
-    с прошлого входа, откроет браузер и попросит код; если их нет — спросит.
-    Старый токен из ${profile.token_env} при этом не копируется: login нужен,
-    чтобы получить новый.
-
-    \b
-    Порядок источников: --token → --client-id/--client-secret →
-    (только --non-interactive: ${profile.token_env}) → client_id/secret из
-    окружения или keychain → интерактивные вопросы.
-
-    \b
-      {profile.cli_name} auth login                          # обычный путь: браузер → код → готово
-      {profile.cli_name} auth login --token y0_AgAAAA...     # вставить готовый токен (обновляться не будет)
-      {profile.cli_name} auth login --token 'https://oauth.yandex.ru/verification_code#access_token=...&expires_in=...'
-      {profile.cli_name} auth login --non-interactive        # скопировать ${profile.token_env} в keychain (CI)
-
-    Создать приложение: {oauth.NEW_APP_URL}
-    Нужные права: {profile.scopes}
-    """
-    app.command("login")(output.guard(login))
-
     # --- refresh -------------------------------------------------------------------
 
+    @app.command("refresh")
+    @output.guard
+    @_help
     def refresh(
         ctx: typer.Context,
         json_output: bool = output.JsonOption,
         quiet: bool = output.QuietOption,
     ) -> None:
+        """Принудительно обновить токен по refresh_token и перезаписать keychain (без браузера).
+
+        Обычно не нужно: CLI сам обновляет токен за 30 дней до истечения и при 403 от API.
+        Полезно для cron/агентов.
+
+        Example: {cli} auth refresh --json
+        """
         bag = store.refresh()
         output.emit_success(
             ctx,
@@ -217,83 +249,88 @@ def make_auth_app(
             ),
         )
 
-    refresh.__doc__ = f"""Принудительно обновить токен по refresh_token и перезаписать keychain (без браузера).
-
-    Обычно не нужно: CLI сам обновляет токен за 30 дней до истечения и при 403 от API.
-    Полезно для cron/агентов.
-
-    \b
-      {profile.cli_name} auth refresh --json
-    """
-    app.command("refresh")(output.guard(refresh))
-
     # --- logout --------------------------------------------------------------------
 
+    @app.command("logout")
+    @output.guard
+    @_help
     def logout(
         ctx: typer.Context,
         json_output: bool = output.JsonOption,
         quiet: bool = output.QuietOption,
     ) -> None:
-        """Удалить токен, refresh_token и данные приложения из keychain (переменные окружения не трогает)."""
+        """Удалить токен, refresh_token и данные приложения из keychain (переменные окружения не трогает).
+
+        Example: {cli} auth logout
+        """
         store.delete()
         output.emit_success(
             ctx, {"provider": profile.provider}, lambda d: human.echo("Учётные данные удалены из keychain.")
         )
 
-    app.command("logout")(output.guard(logout))
-
     # --- status --------------------------------------------------------------------
 
+    @app.command("status")
+    @output.guard
+    @_help
     def auth_status(
         ctx: typer.Context,
-        check_flag: bool = typer.Option(False, "--check", help="Проверить токен живым запросом к API."),
+        check_flag: bool = typer.Option(
+            False, "--check", help="Проверить токен одним дешёвым запросом к API (не дольше 10 с)."
+        ),
         json_output: bool = output.JsonOption,
         quiet: bool = output.QuietOption,
     ) -> None:
-        source = store.source(ctx.obj.get("token"))
-        bag = store.stored() if source == "keychain" else {}
-        payload: dict = {
-            "provider": profile.provider,
-            "authenticated": source is not None,
-            "source": source,
-            **_describe(bag),
-        }
-        if check_flag and source is not None:
-            if check is None:
-                raise InvalidArguments("--check не поддерживается этим инструментом.")
-            try:
-                check(ctx)
-                payload["valid"] = True
-            except CliError as exc:
-                payload["valid"] = False
-                payload["error"] = exc.message
+        """Откуда берётся токен и работает ли он — отчёт в общей для всех инструментов форме. Значений не печатает.
 
-        def render(d: dict) -> None:
-            if not d["authenticated"]:
-                human.echo(f"Токена нет. Выполните '{profile.login_cmd}' или задайте ${profile.token_env}.")
-                return
-            line = f"Токен найден (источник: {d['source']})."
-            if d["expires_at"]:
-                line += (
-                    f" Действует до {d['expires_at'][:10]} ({d['days_left']} дн.), "
-                    f"автообновление: {'да' if d['refreshable'] else 'нет'}."
-                )
-            human.echo(line)
-            if "valid" in d:
-                human.echo(
-                    "[green]API принимает токен.[/green]"
-                    if d["valid"]
-                    else f"[red]API отверг токен:[/red] {d['error']}"
-                )
+        Без --check — только наличие и срок (`unchecked`, `missing`, `expired`), без сети.
+        Код выхода 0 — всё в порядке, 3 — токена нет, он истёк или API его не принимает.
+        --json — контракт для tools-watch (стандарт tools §8): `tool`, `version`,
+        `checked_at`, `credentials[]` с `provider`, `required`, `fields`, `source`,
+        `source_ref`, `status`, `expires_at`, `quota`, `message`; при коде 3 —
+        `ok: false` и `error` CREDENTIALS_UNHEALTHY рядом с отчётом.
 
-        output.emit_success(ctx, payload, render)
+        Example: {cli} auth status --check --json
+        """
+        probe = (lambda: check(ctx)) if check is not None else None
+        entry = status.credential_status(store, live=check_flag, check=probe)
+        report = status.status_report(profile.cli_name, _tool_version(profile.cli_name), [entry])
+        problems = status.status_problems(report)
+        if not problems:
+            output.emit_success(ctx, report, _render_status)
+            return
+        error = CredentialsUnhealthy(profile, problems)
+        if ctx.obj.get("json"):
+            typer.echo(json.dumps({"ok": False, "error": error.to_dict(), **report}, ensure_ascii=False))
+        else:
+            if not ctx.obj.get("quiet"):
+                _render_status(report)
+            typer.echo(f"Error: {error.message}", err=True)
+            typer.echo(error.action, err=True)
+        raise typer.Exit(code=error.exit_code)
 
-    auth_status.__doc__ = f"""Есть ли токен, откуда он (argument / env / keychain), срок действия и автообновление.
-
-    \b
-      {profile.cli_name} auth status --json
-      {profile.cli_name} auth status --check      # + реальный запрос к API
-    """
-    app.command("status")(output.guard(auth_status))
+    def _render_status(report: dict) -> None:
+        for entry in report["credentials"]:
+            mark = {"ok": "✓", "unchecked": "·"}.get(entry["status"], "✗")
+            expires = f", до {entry['expires_at'][:10]}" if entry["expires_at"] else ""
+            detail = f" — {entry['message']}" if entry["message"] else ""
+            line = f"{entry['provider']}: {entry['status']} ({entry['source']}: {entry['source_ref']}){expires}{detail}"
+            human.echo(f"{mark} {_escape(line)}")
 
     return app
+
+
+def _tool_version(cli_name: str) -> str:
+    """Версия инструмента-потребителя: дистрибутив, который ставит console script `cli_name`.
+
+    По entry point, а не по имени пакета: так работает и для editable-установки.
+    """
+    for entry_point in metadata.entry_points(group="console_scripts", name=cli_name):
+        if entry_point.dist is not None:
+            return entry_point.dist.version
+    return "0.0.0"
+
+
+def _escape(text: str) -> str:
+    """Экранировать `[` для rich-разметки `human.echo` (в source_ref/message бывают скобки)."""
+    return text.replace("[", "\\[")

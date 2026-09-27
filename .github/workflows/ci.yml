@@ -1,8 +1,9 @@
 name: CI
 
-# One Linux job on the lowest supported Python keeps private repos inside the
-# free Actions minutes; the full gate also runs locally on the Mac before a
-# release (scripts/release.py). See tools/docs/standard-release.md §6.
+# Optional (tools/docs/standard-release.md §6): the authoritative gate is the
+# local `uv run scripts/release.py --check`, which every release runs anyway.
+# If kept, CI is one Linux job on the lowest supported Python repeating it on
+# a clean machine — delete this file to save Actions minutes on a private repo.
 on:
   push:
     branches: [main]
@@ -15,36 +16,22 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # tags for the version (uv-dynamic-versioning), base branch for towncrier check
+          fetch-depth: 0 # tags: the build's version comes from them
       - uses: astral-sh/setup-uv@v10
         with:
           enable-cache: true
           python-version: "3.11" # lowest from requires-python
-      - run: uv lock --check
-      - run: uv sync
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
-      - run: uv run ty check
-      - run: uv run pytest
-      - name: Changelog fragment present
-        # Dependabot's grouped bumps aren't user-visible changes and can't add a fragment.
-        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
-        run: uv run towncrier check --compare-with origin/${{ github.base_ref }}
 
-      # The distribution path. This is a library with no executables, so instead of
-      # `uv tool install .` build the wheel, install it into a clean venv and check
-      # that the version came from the git tag (not the 0.0.0 fallback).
-      - name: Install the built wheel
+      # The gate's vulnerability audit runs osv-scanner when it's on PATH.
+      - name: Install osv-scanner
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          uv build --wheel --out-dir dist
-          uv venv /tmp/smoke
-          VIRTUAL_ENV=/tmp/smoke uv pip install dist/*.whl
-          /tmp/smoke/bin/python -c "import importlib.metadata as m, yandex_oauth; v = m.version('yandex-oauth'); print(v); assert v != '0.0.0'"
+          gh release download --repo google/osv-scanner --pattern osv-scanner_linux_amd64 --output "$RUNNER_TEMP/osv-scanner"
+          chmod +x "$RUNNER_TEMP/osv-scanner"
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
 
-      # Known vulnerabilities in the locked dependency set (OSV-Scanner reads
-      # uv.lock natively). Dependabot opens the upgrade PRs; this is what
-      # fails the build until they're merged. Locally: `osv-scanner --lockfile=uv.lock`.
-      - uses: google/osv-scanner-action/osv-scanner-action@v2.6.0
-        with:
-          scan-args: |-
-            --lockfile=uv.lock
+      # Everything: lock, lint, format, types, tests (incl. help snapshots and
+      # the auth status shape), changelog fragment, wheel build + install
+      # (a library: no console script to run), osv-scanner over uv.lock.
+      - run: uv run scripts/release.py --check

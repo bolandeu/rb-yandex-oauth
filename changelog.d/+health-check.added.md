@@ -1,0 +1,1 @@
+`yandex_oauth.health_check(store, check)` → `Health` (`status`, `expires_at`, `quota`, `message`) — делегат для `Provider.health_check()` инструментов по шаблону cli-generator: жёсткий лимит 10 с, 401/403 → `invalid`, сеть/429/5xx/таймаут → `unreachable`, значения секретов вычищаются из сообщений. Также `status_problems(report)` и ошибка `CredentialsUnhealthy`.

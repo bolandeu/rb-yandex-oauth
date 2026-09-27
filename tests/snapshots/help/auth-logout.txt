@@ -1,0 +1,13 @@
+
+ Usage: demo auth logout [OPTIONS]
+
+ Удалить токен, refresh_token и данные приложения из keychain (переменные окружения не трогает).
+
+ Example: demo auth logout
+
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
+│ --json           Emit machine-readable JSON output.                                              │
+│ --quiet          Suppress non-essential output.                                                  │
+│ --help           Show this message and exit.                                                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+
