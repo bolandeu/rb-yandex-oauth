@@ -83,7 +83,7 @@ def main() -> None:
         fail(f"tag {tag} already exists")
 
     run("uv", "run", "towncrier", "build", "--version", version, "--yes")
-    run("git", "add", "-A", "CHANGELOG.md", "changelog.d")
+    run("git", "add", "CHANGELOG.md")  # towncrier сам делает git rm собранных фрагментов
     run("git", "commit", "-m", f"Release {tag}")
     run("git", "tag", "-a", tag, "-m", tag)
 
