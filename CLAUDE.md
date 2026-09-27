@@ -3,14 +3,16 @@
 ## Commands
 
 ```bash
-uv sync --all-extras
+uv sync
 uv run pytest
-uv run ruff check .
+uv run ruff check . && uv run ruff format --check . && uv run ty check
+uv run towncrier create +<slug>.<type>.md -c "…"   # фрагмент CHANGELOG на каждое заметное изменение
+uv run scripts/release.py patch|minor|major       # релиз с main: тег vX.Y.Z (версия только в теге)
 ```
 
 ## Что это
 
-Общая библиотека OAuth-авторизации Яндекса для CLI-инструментов `~/Projects/tools/` (`ym`, `ywm`, …), построенных по единой CLI-архитектуре (skill `cli-generator:cli-builder`). Не CLI сама по себе — подключается как path-зависимость (`[tool.uv.sources]`), см. README.
+Общая библиотека OAuth-авторизации Яндекса для CLI-инструментов `~/Projects/tools/` (`ym`, `ywm`, …), построенных по единой CLI-архитектуре (skill `cli-generator:cli-builder`). Не CLI сама по себе — подключается как git-зависимость на релизный тег (`[tool.uv.sources]`), см. README и `~/Projects/tools/docs/standard-release.md`.
 
 **Source layout:** `src/yandex_oauth/`
 

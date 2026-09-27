@@ -1,0 +1,1 @@
+Версия пакета теперь берётся из git-тега `vX.Y.Z` (uv-dynamic-versioning), CHANGELOG собирается из фрагментов `changelog.d/` (towncrier), релиз — `uv run scripts/release.py patch|minor|major`. Потребителям: зависеть от тега (`tag = "v0.1.0"`), а не от `main`.
