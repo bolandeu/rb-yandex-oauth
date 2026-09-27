@@ -1,1 +1,0 @@
-Вернулись CI (GitHub Actions: один job на ubuntu-24.04 и Python 3.11 — гейт, проверка фрагмента CHANGELOG, сборка и установка wheel, OSV-сканирование) и Dependabot (uv и github-actions раз в месяц, одним PR на экосистему).

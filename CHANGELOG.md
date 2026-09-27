@@ -5,6 +5,19 @@
 
 <!-- towncrier release notes start -->
 
+## [0.1.2] - 2026-09-27
+
+### Added
+
+- `credential_status`, `status_report`, `status_exit_code` — отчёт `auth status --json` по контракту §8 стандарта tools (source, status, expires_at, живая проверка под `--check`) для переиспользования в ym, ywm и других инструментах.
+- Вернулись CI (GitHub Actions: один job на ubuntu-24.04 и Python 3.11 — гейт, проверка фрагмента CHANGELOG, сборка и установка wheel, OSV-сканирование) и Dependabot (uv и github-actions раз в месяц, одним PR на экосистему).
+- Работа без keychain (Linux-сервер, `doppler run`): если keychain недоступен, чтение не падает; при заданных `YANDEX_OAUTH_YANDEX_REFRESH_TOKEN`, `_CLIENT_ID`, `_CLIENT_SECRET` access-токен получается при первом запросе и обновляется в памяти процесса, ничего не записывая. Если не хватает части переменных — ошибка `CREDENTIALS_INCOMPLETE` (exit 3) с их именами.
+
+### Changed
+
+- README: одна схема имён переменных окружения — `YANDEX_OAUTH_YANDEX_*` основная, `YANDEX_CLIENT_ID/SECRET` и `<TOOL>_TOKEN` — legacy; исправлен устаревший docstring про `<CLI>_YANDEX_<FIELD>`.
+
+
 ## [0.1.1] - 2026-09-27
 
 ### Changed

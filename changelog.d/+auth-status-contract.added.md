@@ -1,1 +1,0 @@
-`credential_status`, `status_report`, `status_exit_code` — отчёт `auth status --json` по контракту §8 стандарта tools (source, status, expires_at, живая проверка под `--check`) для переиспользования в ym, ywm и других инструментах.
