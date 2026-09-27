@@ -1,5 +1,5 @@
 [project]
-name = "yandex-oauth"
+name = "rb-yandex-oauth"
 dynamic = ["version"]
 description = "Общая OAuth-авторизация Яндекса для CLI-инструментов (ym, ywm, …): keychain, автообновление токена, команда auth"
 requires-python = ">=3.11"
@@ -28,6 +28,10 @@ fallback-version = "0.0.0"
 
 [tool.uv]
 cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true } }]
+
+# Команды — не в commands/*.py: их строит make_auth_app (scripts/check_command_docstrings.py).
+[tool.cli-generator]
+commands = "src/*/auth_command.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/yandex_oauth"]

@@ -1,4 +1,4 @@
-# yandex-oauth
+# yandex-oauth (`rb-yandex-oauth`)
 
 Общая OAuth-авторизация Яндекса для CLI-инструментов (`ym`, `ywm`, …). Один Яндекс-аккаунт и одно OAuth-приложение — **один токен в общем слоте keychain** (`yandex-oauth:yandex`) для всех инструментов: вход в любом из них авторизует остальные, токен обновляется сам. Без дублирования кода и без `.env`-файлов.
 
@@ -39,13 +39,15 @@ Keychain недоступен (Linux без Secret Service, контейнер) 
 `pyproject.toml` инструмента:
 
 ```toml
-dependencies = ["yandex-oauth>=0.2,<0.3", ...]   # на 0.x минорная версия считается ломающей
+dependencies = ["rb-yandex-oauth>=0.3,<0.4", ...]   # на 0.x минорная версия считается ломающей
 
 [tool.uv.sources]
-yandex-oauth = { git = "https://github.com/bolandeu/yandex-oauth", tag = "v0.2.0" }
+rb-yandex-oauth = { git = "https://github.com/bolandeu/yandex-oauth", tag = "v0.3.0" }
 ```
 
-Не `branch = "main"` и не закоммиченный `path =`. Правки одновременно с инструментом — `uv pip install -e ../yandex-oauth` в его venv, без коммита. Переход на новый тег: `tag = "vNEW"` + `uv lock --upgrade-package yandex-oauth` + тесты инструмента, одним коммитом.
+Имя дистрибутива — `rb-yandex-oauth` (§10 стандарта: `yandex-oauth` на PyPI — чужой пакет), импорт по-прежнему `yandex_oauth`. Не `branch = "main"` и не закоммиченный `path =`. Правки одновременно с инструментом — `uv pip install -e ../yandex-oauth` в его venv, без коммита. Переход на новый тег: `tag = "vNEW"` + `uv lock --upgrade-package rb-yandex-oauth` + тесты инструмента, одним коммитом.
+
+Переход с `yandex-oauth` (до v0.3.0) на `rb-yandex-oauth`: поменять имя и в `dependencies`, и в ключе `[tool.uv.sources]`. **Ловушка dev-venv:** `uv sync` после переименования ставит новый дистрибутив и удаляет старый — вместе с общими файлами, и console script инструмента может пропасть, так что `uv run <cli>` молча запустит другой `<cli>` из PATH (старый глобальный). Один раз: `uv sync --reinstall-package <дистрибутив инструмента>` (и `--reinstall-package rb-yandex-oauth`, если `import yandex_oauth` сломался).
 
 `constants.py`:
 
@@ -91,6 +93,6 @@ scripts/install_hooks.sh            # один раз на клон: git-хук�
 
 Стандарт — `~/Projects/tools/docs/standard-release.md`.
 
-- Версии в `pyproject.toml` нет: она берётся из git-тега `vX.Y.Z` (uv-dynamic-versioning), в коде — `importlib.metadata.version("yandex-oauth")`.
+- Версии в `pyproject.toml` нет: она берётся из git-тега `vX.Y.Z` (uv-dynamic-versioning), в коде — `importlib.metadata.version("rb-yandex-oauth")`.
 - `CHANGELOG.md` руками не правят. Каждое заметное изменение — фрагмент: `uv run towncrier create +<slug>.<type>.md -c "…"` (типы: added, changed, deprecated, removed, fixed, security).
 - Релиз с `main`: `uv run scripts/release.py patch|minor|major` — гейт, сборка CHANGELOG, коммит `Release vX.Y.Z`, аннотированный тег. Push скрипт не делает, печатает команду.

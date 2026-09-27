@@ -124,7 +124,7 @@ def _scrub(message: str, secrets: list[str | None]) -> str:
 
 
 def _iso(moment: datetime | None) -> str | None:
-    return moment.astimezone(UTC).isoformat().replace("+00:00", "Z") if moment else None
+    return moment.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z") if moment else None
 
 
 def credential_status(
@@ -214,7 +214,7 @@ def status_report(tool: str, version: str, credentials: list[dict]) -> dict:
     return {
         "tool": tool,
         "version": version,
-        "checked_at": _iso(_now().replace(microsecond=0)),
+        "checked_at": _iso(_now()),
         "credentials": credentials,
     }
 

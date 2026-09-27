@@ -53,6 +53,11 @@ class TestEnvelope:
         assert list(entry) == ENTRY_KEYS
         assert entry["status"] == "unchecked" and entry["expires_at"] == "2099-01-01T00:00:00Z"
 
+    def test_expires_at_without_microseconds(self, app, runner, fake_keyring):
+        fake_keyring[KEY] = json.dumps({"token": "t", "expires_at": "2099-01-01T00:00:00.123456+00:00"})
+        entry = _json(runner.invoke(app, ["auth", "status", "--json"]))["credentials"][0]
+        assert entry["expires_at"] == "2099-01-01T00:00:00Z"
+
     def test_problem_report_keeps_full_report_next_to_error(self, app, runner):
         result = runner.invoke(app, ["auth", "status", "--json"])
         assert result.exit_code == 3

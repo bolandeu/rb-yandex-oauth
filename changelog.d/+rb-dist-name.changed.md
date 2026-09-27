@@ -1,0 +1,1 @@
+Дистрибутив переименован: `yandex-oauth` → `rb-yandex-oauth` (стандарт §10: `yandex-oauth` на PyPI — чужой пакет). Импорт `yandex_oauth` не меняется. Потребителям: новое имя в `dependencies` и в ключе `[tool.uv.sources]`, в существующем venv — `uv sync --reinstall-package <дистрибутив>` (см. README).
