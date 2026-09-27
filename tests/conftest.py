@@ -1,4 +1,5 @@
 """Тесты никогда не трогают настоящий keychain и не зависят от окружения разработчика."""
+
 from __future__ import annotations
 
 import pytest
@@ -62,7 +63,7 @@ def app(store: TokenStore):
         ctx.ensure_object(dict)
         ctx.obj.update({"token": token, "json": json_output, "non_interactive": non_interactive, "quiet": False})
 
-    root.checks = checks  # type: ignore[attr-defined]
+    setattr(root, "checks", checks)  # атрибут, которого нет у Typer
     return root
 
 

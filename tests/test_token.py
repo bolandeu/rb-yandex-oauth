@@ -1,4 +1,5 @@
 """Жизненный цикл токена: проактивное и реактивное автообновление."""
+
 from __future__ import annotations
 
 import json
@@ -14,8 +15,14 @@ from yandex_oauth.oauth import TokenSet
 from .conftest import KEY
 
 
-def _bag(fake_keyring, *, expires_in_days: float | None, refreshable: bool = True, token: str = "old",
-         age_days: float | None = None) -> None:
+def _bag(
+    fake_keyring,
+    *,
+    expires_in_days: float | None,
+    refreshable: bool = True,
+    token: str = "old",
+    age_days: float | None = None,
+) -> None:
     bag = {"token": token}
     if age_days is not None:
         bag["issued_at"] = (token_mod._now() - timedelta(days=age_days)).isoformat()
@@ -109,7 +116,13 @@ class TestSource:
 
 
 class TestRetry:
-    @pytest.mark.parametrize("body", ['{"error_code":"INVALID_OAUTH_TOKEN"}', '{"errors":[{"error_type":"invalid_token","message":"Invalid oauth_token"}]}'])
+    @pytest.mark.parametrize(
+        "body",
+        [
+            '{"error_code":"INVALID_OAUTH_TOKEN"}',
+            '{"errors":[{"error_type":"invalid_token","message":"Invalid oauth_token"}]}',
+        ],
+    )
     def test_invalid_token_bodies_trigger_refresh(self, fake_keyring, store, body):
         _bag(fake_keyring, expires_in_days=200)
         with patch("yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 3600)):
@@ -128,4 +141,4 @@ class TestRetry:
         with pytest.raises(CliError) as exc_info:
             store.refresh()
         assert exc_info.value.code == "TOKEN_NOT_REFRESHABLE"
-        assert "demo auth login" in exc_info.value.action
+        assert "demo auth login" in (exc_info.value.action or "")

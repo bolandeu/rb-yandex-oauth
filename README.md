@@ -15,23 +15,26 @@
 Порядок поиска токена везде одинаковый: `--token` → `$<TOKEN_ENV>` (CI/скрипты) → общий keychain.
 `auth login` без `--token` всегда получает **новый** токен (OAuth через браузер) и кладёт его в общий слот; старый из окружения не копируется (только под `--non-interactive`). Файлы `.env` не читаются: секреты живут только в keychain и переменных окружения.
 
-Репозиторий: https://github.com/bolandeu/yandex-oauth. Инструменты подключают его как path-зависимость, поэтому клонировать нужно рядом с ними: `~/Projects/tools/yandex-oauth`.
+Репозиторий: https://github.com/bolandeu/yandex-oauth. Инструменты подключают его как git-зависимость, закреплённую на релизном теге.
 
 ## Подключение к инструменту
 
 `pyproject.toml` инструмента:
 
 ```toml
-dependencies = ["yandex-oauth", ...]
+dependencies = ["yandex-oauth>=0.1,<0.2", ...]   # на 0.x минорная версия считается ломающей
 
 [tool.uv.sources]
-yandex-oauth = { path = "../yandex-oauth", editable = true }   # пакет лежит рядом в ~/Projects/tools/
+yandex-oauth = { git = "https://github.com/bolandeu/yandex-oauth", tag = "v0.1.0" }
 ```
+
+Не `branch = "main"` и не закоммиченный `path =`. Правки одновременно с инструментом — `uv pip install -e ../yandex-oauth` в его venv, без коммита. Переход на новый тег: `tag = "vNEW"` + `uv lock --upgrade-package yandex-oauth` + тесты инструмента, одним коммитом.
 
 `constants.py`:
 
 ```python
 from yandex_oauth import Profile
+
 PROFILE = Profile(cli_name="ym", token_env="YANDEX_METRIKA_TOKEN", scopes="metrika:read", service="Яндекс.Метрика")
 ```
 
@@ -45,13 +48,22 @@ if not t:
     raise AuthRequired(PROFILE)
 ...
 if not resp.is_success and self._refreshable:
-    new_token = token_store.retry_token_after(resp.status_code, resp.text)   # обновит и вернёт токен при 403 invalid token
+    # обновит и вернёт токен при 403 invalid token
+    new_token = token_store.retry_token_after(resp.status_code, resp.text)
 ```
 
 ## Разработка
 
 ```bash
-uv sync --all-extras
+uv sync
 uv run pytest
-uv run ruff check .
+uv run ruff check . && uv run ruff format --check . && uv run ty check
 ```
+
+## Версии и релизы
+
+Стандарт — `~/Projects/tools/docs/standard-release.md`.
+
+- Версии в `pyproject.toml` нет: она берётся из git-тега `vX.Y.Z` (uv-dynamic-versioning), в коде — `importlib.metadata.version("yandex-oauth")`.
+- `CHANGELOG.md` руками не правят. Каждое заметное изменение — фрагмент: `uv run towncrier create +<slug>.<type>.md -c "…"` (типы: added, changed, deprecated, removed, fixed, security).
+- Релиз с `main`: `uv run scripts/release.py patch|minor|major` — гейт, сборка CHANGELOG, коммит `Release vX.Y.Z`, аннотированный тег. Push скрипт не делает, печатает команду.

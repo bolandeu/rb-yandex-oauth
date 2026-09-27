@@ -1,4 +1,5 @@
 """Минимальный `output`-модуль в духе общей CLI-архитектуры — только то, что нужно auth-командам."""
+
 from __future__ import annotations
 
 import functools

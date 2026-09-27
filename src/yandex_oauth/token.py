@@ -19,7 +19,7 @@ from .profile import Profile
 
 FIELDS = ["token", "refresh_token", "issued_at", "expires_at", "client_id", "client_secret"]
 REFRESH_BEFORE = timedelta(days=30)  # обновлять заранее: refresh_token живёт столько же, сколько access-токен
-REFRESH_AFTER = timedelta(days=90)   # и не реже раза в 3 месяца — рекомендация Яндекса для долгоживущих токенов
+REFRESH_AFTER = timedelta(days=90)  # и не реже раза в 3 месяца — рекомендация Яндекса для долгоживущих токенов
 
 # Так разные API Яндекса сообщают о протухшем токене:
 # Вебмастер — {"error_code":"INVALID_OAUTH_TOKEN"}, Метрика — "invalid_token" / "Invalid oauth_token".

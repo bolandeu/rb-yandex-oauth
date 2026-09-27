@@ -104,10 +104,14 @@ def make_auth_app(
     def login(
         ctx: typer.Context,
         token: str | None = typer.Option(
-            None, "--token", help="Готовый OAuth-токен или адрес …verification_code#access_token=… (без автообновления)."
+            None,
+            "--token",
+            help="Готовый OAuth-токен или адрес …verification_code#access_token=… (без автообновления).",
         ),
         client_id: str | None = typer.Option(None, "--client-id", help=f"ID OAuth-приложения (или ${CLIENT_ID_ENV})."),
-        client_secret: str | None = typer.Option(None, "--client-secret", help=f"Секрет приложения (или ${CLIENT_SECRET_ENV})."),
+        client_secret: str | None = typer.Option(
+            None, "--client-secret", help=f"Секрет приложения (или ${CLIENT_SECRET_ENV})."
+        ),
         non_interactive: bool = output.NonInteractiveOption,
         json_output: bool = output.JsonOption,
         quiet: bool = output.QuietOption,
@@ -166,7 +170,9 @@ def make_auth_app(
                     f"автообновление: {'да' if d['refreshable'] else 'нет'}"
                 )
             else:
-                human.echo("[yellow]Срок действия неизвестен, автообновление невозможно (токен вставлен вручную).[/yellow]")
+                human.echo(
+                    "[yellow]Срок действия неизвестен, автообновление невозможно (токен вставлен вручную).[/yellow]"
+                )
 
         output.emit_success(ctx, payload, render)
 
@@ -206,7 +212,9 @@ def make_auth_app(
         output.emit_success(
             ctx,
             {"provider": profile.provider, "refreshed": True, **_describe(bag)},
-            lambda d: human.echo(f"[green]Токен обновлён.[/green] Действует до {d['expires_at'][:10]} ({d['days_left']} дн.)"),
+            lambda d: human.echo(
+                f"[green]Токен обновлён.[/green] Действует до {d['expires_at'][:10]} ({d['days_left']} дн.)"
+            ),
         )
 
     refresh.__doc__ = f"""Принудительно обновить токен по refresh_token и перезаписать keychain (без браузера).
@@ -228,7 +236,9 @@ def make_auth_app(
     ) -> None:
         """Удалить токен, refresh_token и данные приложения из keychain (переменные окружения не трогает)."""
         store.delete()
-        output.emit_success(ctx, {"provider": profile.provider}, lambda d: human.echo("Учётные данные удалены из keychain."))
+        output.emit_success(
+            ctx, {"provider": profile.provider}, lambda d: human.echo("Учётные данные удалены из keychain.")
+        )
 
     app.command("logout")(output.guard(logout))
 
@@ -270,7 +280,11 @@ def make_auth_app(
                 )
             human.echo(line)
             if "valid" in d:
-                human.echo("[green]API принимает токен.[/green]" if d["valid"] else f"[red]API отверг токен:[/red] {d['error']}")
+                human.echo(
+                    "[green]API принимает токен.[/green]"
+                    if d["valid"]
+                    else f"[red]API отверг токен:[/red] {d['error']}"
+                )
 
         output.emit_success(ctx, payload, render)
 

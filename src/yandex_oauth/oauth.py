@@ -73,7 +73,12 @@ def exchange_code(code: str, client_id: str, client_secret: str) -> TokenSet:
 def refresh_access_token(refresh_token: str, client_id: str, client_secret: str) -> TokenSet:
     """Получить новый access-токен по refresh_token без участия пользователя."""
     return _token_request(
-        {"grant_type": "refresh_token", "refresh_token": refresh_token, "client_id": client_id, "client_secret": client_secret},
+        {
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "client_id": client_id,
+            "client_secret": client_secret,
+        },
         code="OAUTH_REFRESH_FAILED",
         action="Refresh-токен отозван или истёк — выполните 'auth login' заново.",
     )

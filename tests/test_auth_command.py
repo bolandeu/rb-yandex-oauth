@@ -1,4 +1,5 @@
 """Команда auth: login/refresh/logout/status на нейтральном профиле."""
+
 from __future__ import annotations
 
 import io
@@ -38,7 +39,16 @@ class TestLogin:
         assert data["refreshable"] is False and 360 <= data["days_left"] <= 365
 
     def test_manual_url_error(self, app, runner):
-        result = runner.invoke(app, ["auth", "login", "--token", "https://oauth.yandex.ru/verification_code#error=unauthorized_client", "--json"])
+        result = runner.invoke(
+            app,
+            [
+                "auth",
+                "login",
+                "--token",
+                "https://oauth.yandex.ru/verification_code#error=unauthorized_client",
+                "--json",
+            ],
+        )
         assert result.exit_code == 1
         assert _json(result)["error"]["code"] == "OAUTH_MANUAL_FAILED"
 
@@ -62,8 +72,10 @@ class TestLogin:
         monkeypatch.setenv("YANDEX_DEMO_TOKEN", "stale")
         monkeypatch.setenv("YANDEX_CLIENT_ID", "cid")
         monkeypatch.setenv("YANDEX_CLIENT_SECRET", "sec")
-        with patch("yandex_oauth.auth_command.webbrowser.open") as browser, \
-             patch("yandex_oauth.oauth.exchange_code", return_value=TokenSet("fresh", "rt-1", 3600)) as exchange:
+        with (
+            patch("yandex_oauth.auth_command.webbrowser.open") as browser,
+            patch("yandex_oauth.oauth.exchange_code", return_value=TokenSet("fresh", "rt-1", 3600)) as exchange,
+        ):
             result = runner.invoke(app, ["auth", "login", "--json"], input="the-code\n")
         assert result.exit_code == 0, result.stdout
         browser.assert_called_once()
@@ -76,13 +88,17 @@ class TestLogin:
         assert data["method"] == "oauth" and data["refreshable"] is True and data["days_left"] == 0
 
     def test_explicit_client_creds_in_non_interactive_fail(self, app, runner):
-        result = runner.invoke(app, ["auth", "login", "--client-id", "c", "--client-secret", "s", "--non-interactive", "--json"])
+        result = runner.invoke(
+            app, ["auth", "login", "--client-id", "c", "--client-secret", "s", "--non-interactive", "--json"]
+        )
         assert result.exit_code == 2
 
     def test_interactive_reuses_stored_client_creds(self, app, runner, fake_keyring):
         fake_keyring[KEY] = json.dumps({"token": "old", "client_id": "cid", "client_secret": "sec"})
-        with patch("yandex_oauth.auth_command.webbrowser.open"), \
-             patch("yandex_oauth.oauth.exchange_code", return_value=TokenSet("new", "rt", 100)) as exchange:
+        with (
+            patch("yandex_oauth.auth_command.webbrowser.open"),
+            patch("yandex_oauth.oauth.exchange_code", return_value=TokenSet("new", "rt", 100)) as exchange,
+        ):
             result = runner.invoke(app, ["auth", "login"], input="code\n")
         assert result.exit_code == 0, result.stdout
         exchange.assert_called_once_with("code", "cid", "sec")
