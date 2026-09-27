@@ -17,10 +17,16 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0 # tags: the build's version comes from them
+      # Lowest Python allowed by requires-python (">=3.11" -> 3.11), so CI tests
+      # the oldest interpreter users may have, not whatever is newest.
+      - name: Lowest supported Python
+        id: python
+        run: echo "version=$(grep -m1 '^requires-python' pyproject.toml | grep -oE '[0-9]+\.[0-9]+' | head -1)" >> "$GITHUB_OUTPUT"
+      # Exact version tags: setup-uv publishes no floating major tag (there is no @v10).
       - uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
-          python-version: "3.11" # lowest from requires-python
+          python-version: ${{ steps.python.outputs.version }}
 
       # The gate's vulnerability audit runs osv-scanner when it's on PATH.
       - name: Install osv-scanner

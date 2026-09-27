@@ -47,6 +47,10 @@ source = ["src"]
 fail_under = 85
 show_missing = true
 
+[tool.ty.terminal]
+# Гейт валят только ошибки: свежий ty (>= 0.0.84) иначе выходит с 1 и на предупреждениях.
+error-on-warning = false
+
 [tool.ruff]
 line-length = 120
 

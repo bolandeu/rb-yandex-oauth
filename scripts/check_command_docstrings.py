@@ -5,7 +5,7 @@ Every command function's docstring is what Typer renders as `--help` —
 the documentation agents and humans read (see architecture.md, "AI-first
 output"). A command is a function in `src/*/commands/*.py` (or the globs in
 `[tool.cli-generator] commands` in pyproject.toml) decorated with
-`output.guard`; "logic" is its signature plus its body minus the
+`output.guard` or registered with `@<app>.command(...)`; "logic" is its signature plus its body minus the
 docstring. One check, three callers:
 
     check_command_docstrings.py                      git pre-commit (.githooks/): staged vs HEAD, exit 1
@@ -14,8 +14,10 @@ docstring. One check, three callers:
 
 Exit 2 is how a Claude Code hook hands its stderr back to the agent. The
 Stop hook lets the turn end on its second attempt (`stop_hook_active`), so
-a change that truly doesn't alter behaviour can't loop forever; the git
-hook's escape for the same case is `SKIP_DOCSTRING_CHECK=1 git commit ...`.
+a change that truly doesn't alter behaviour can't loop forever. An agent's
+behaviour-neutral edit (lint/type fix) keeps the body AST-identical with
+`# noqa` / `# ty: ignore[...]` comments; the git hook's escape
+`SKIP_DOCSTRING_CHECK=1 git commit ...` is for humans only (standard §7).
 """
 
 from __future__ import annotations
@@ -59,6 +61,12 @@ def _git(*args: str) -> str | None:
     return result.stdout if result.returncode == 0 else None
 
 
+def _is_command_decorator(decorator: ast.expr) -> bool:
+    """`@output.guard`, or a Typer registration: `@app.command`, `@app.command("name")`, `@group.command(...)`."""
+    target = decorator.func if isinstance(decorator, ast.Call) else decorator
+    return ast.unparse(target).split(".")[-1] in ("guard", "command")
+
+
 def _doc_assignments(tree: ast.Module) -> dict[str, str]:
     """`name.__doc__ = <expr>` at module level (e.g. an f-string help text) -> the expression's source."""
     assigned: dict[str, str] = {}
@@ -83,7 +91,7 @@ def _commands(source: str) -> dict[str, tuple[str | None, str]]:
     for node in ast.walk(tree):
         if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             continue
-        if not any(ast.unparse(dec).split(".")[-1] == "guard" for dec in node.decorator_list):
+        if not any(_is_command_decorator(dec) for dec in node.decorator_list):
             continue
         literal = ast.get_docstring(node)
         docstring = assigned.get(node.name, literal)
@@ -160,7 +168,11 @@ def main(argv: list[str]) -> int:
             return 0  # already blocked once this turn — don't loop
         stale = stale_commands(_changed_command_files(), staged=False)
         if stale:
-            _report(stale, "Update the docstrings before finishing (or say why the behaviour is unchanged).")
+            _report(
+                stale,
+                "Update the docstrings before finishing. For a lint/type-only edit, keep the body AST-identical "
+                "(`# noqa` / `# ty: ignore[...]` comments) instead.",
+            )
             return 2
         return 0
 
@@ -169,7 +181,11 @@ def main(argv: list[str]) -> int:
     staged = [p for p in (_git("diff", "--cached", "--name-only", "--diff-filter=ACM") or "").splitlines()]
     stale = stale_commands([p for p in staged if is_command_file(p)], staged=True)
     if stale:
-        _report(stale, "Commit blocked. If the behaviour truly didn't change: SKIP_DOCSTRING_CHECK=1 git commit ...")
+        _report(
+            stale,
+            "Commit blocked. A behaviour-neutral edit (lint/type fix) must keep the body AST-identical — use "
+            "`# noqa` / `# ty: ignore[...]` comments. SKIP_DOCSTRING_CHECK=1 is for humans only, never agents.",
+        )
         return 1
     return 0
 
