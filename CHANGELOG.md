@@ -5,6 +5,17 @@
 
 <!-- towncrier release notes start -->
 
+## [0.3.0] - 2026-09-27
+
+### Changed
+
+- Дистрибутив переименован: `yandex-oauth` → `rb-yandex-oauth` (стандарт §10: `yandex-oauth` на PyPI — чужой пакет). Импорт `yandex_oauth` не меняется. Потребителям: новое имя в `dependencies` и в ключе `[tool.uv.sources]`, в существующем venv — `uv sync --reinstall-package <дистрибутив>` (см. README).
+
+### Fixed
+
+- `auth status --json`: `expires_at` — без микросекунд, как `checked_at`.
+
+
 ## [0.2.0] - 2026-09-27
 
 ### Added
