@@ -5,6 +5,18 @@
 
 <!-- towncrier release notes start -->
 
+## [0.2.0] - 2026-09-27
+
+### Added
+
+- `yandex_oauth.health_check(store, check)` → `Health` (`status`, `expires_at`, `quota`, `message`) — делегат для `Provider.health_check()` инструментов по шаблону cli-generator: жёсткий лимит 10 с, 401/403 → `invalid`, сеть/429/5xx/таймаут → `unreachable`, значения секретов вычищаются из сообщений. Также `status_problems(report)` и ошибка `CredentialsUnhealthy`.
+
+### Changed
+
+- **Ломающее:** `auth status [--check] --json` из `make_auth_app` выдаёт отчёт §8 (`tool`, `version`, `checked_at`, `credentials[]`) в стандартном конверте вместо `{provider, authenticated, source, valid, …}`; при проблеме — exit 3, `ok: false` и `error` `CREDENTIALS_UNHEALTHY` рядом с отчётом. `--check` без проверочного запроса инструмента больше не ошибка, а статус `unchecked`. `status_exit_code` считает проблемой `invalid`/`expired` и у необязательного провайдера; `expires_at` — в UTC с `Z`; `source_ref` у keychain — `keychain service yandex-oauth:yandex`, при env-переопределении полей — `env` с перечислением всех мест.
+- Стандарт релизов tools v1.2.0: канонический `scripts/release.py` из шаблона cli-generator (`--check` — весь гейт, включая сборку и установку wheel и osv-scanner), CI — один job с `release.py --check`; справка команд `auth` защищена хуками, контракт-тестом и снапшотами (§7), у каждой команды есть строка `Example:`.
+
+
 ## [0.1.2] - 2026-09-27
 
 ### Added
