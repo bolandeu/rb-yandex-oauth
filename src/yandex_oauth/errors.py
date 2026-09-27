@@ -47,7 +47,11 @@ class AuthRequired(CliError):
         super().__init__(
             "AUTH_REQUIRED",
             f"Нет токена для провайдера '{profile.provider}'.",
-            action=f"Выполните '{profile.login_cmd}' или задайте переменную {profile.token_env}.",
+            action=(
+                f"Выполните '{profile.login_cmd}' или задайте переменные окружения "
+                f"{_env(profile, 'REFRESH_TOKEN')}, {_env(profile, 'CLIENT_ID')}, {_env(profile, 'CLIENT_SECRET')} "
+                f"(без keychain, токен обновляется в памяти) либо готовый токен в {profile.token_env}."
+            ),
             exit_code=3,
         )
 
@@ -57,6 +61,28 @@ class CredentialStoreUnavailable(CliError):
         super().__init__(
             "CREDENTIAL_STORE_UNAVAILABLE",
             f"Не удалось обратиться к системному хранилищу ключей для '{profile.provider}': {reason}",
-            action=f"Задайте токен через переменную окружения {profile.token_env} вместо 'auth login'.",
+            action=(
+                f"Без keychain 'auth login' сохранить токен не может. Задайте переменные окружения "
+                f"{_env(profile, 'REFRESH_TOKEN')}, {_env(profile, 'CLIENT_ID')}, {_env(profile, 'CLIENT_SECRET')} "
+                f"(или готовый токен в {profile.token_env})."
+            ),
             exit_code=1,
         )
+
+
+class CredentialsIncomplete(CliError):
+    """В окружении есть часть полей для обновления токена, но не все — иначе молча было бы «нет токена»."""
+
+    def __init__(self, profile: Profile, missing: list[str]) -> None:
+        super().__init__(
+            "CREDENTIALS_INCOMPLETE",
+            f"Для получения токена '{profile.provider}' из переменных окружения не хватает: {', '.join(missing)}.",
+            action=f"Задайте {', '.join(missing)} (или выполните '{profile.login_cmd}' там, где есть keychain).",
+            exit_code=3,
+        )
+
+
+def _env(profile: Profile, field: str) -> str:
+    """Имя переменной окружения поля общего слота: YANDEX_OAUTH_<PROVIDER>_<FIELD>."""
+    prefix = profile.keychain_namespace.upper().replace("-", "_")
+    return f"{prefix}_{profile.provider.upper()}_{field}"

@@ -1,0 +1,1 @@
+Работа без keychain (Linux-сервер, `doppler run`): если keychain недоступен, чтение не падает; при заданных `YANDEX_OAUTH_YANDEX_REFRESH_TOKEN`, `_CLIENT_ID`, `_CLIENT_SECRET` access-токен получается при первом запросе и обновляется в памяти процесса, ничего не записывая. Если не хватает части переменных — ошибка `CREDENTIALS_INCOMPLETE` (exit 3) с их именами.

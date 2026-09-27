@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 import typer
 from typer.testing import CliRunner
@@ -31,8 +33,9 @@ def fake_keyring(monkeypatch: pytest.MonkeyPatch) -> dict[tuple[str, str], str]:
     monkeypatch.setattr("yandex_oauth.credentials.keyring.set_password", fake_set_password)
     monkeypatch.setattr("yandex_oauth.credentials.keyring.get_password", fake_get_password)
     monkeypatch.setattr("yandex_oauth.credentials.keyring.delete_password", fake_delete_password)
-    for var in ("YANDEX_DEMO_TOKEN", "YANDEX_OAUTH_YANDEX_TOKEN", "YANDEX_CLIENT_ID", "YANDEX_CLIENT_SECRET"):
-        monkeypatch.delenv(var, raising=False)
+    for var in list(os.environ):
+        if var.startswith("YANDEX_"):
+            monkeypatch.delenv(var)
     return store
 
 
@@ -70,3 +73,22 @@ def app(store: TokenStore):
 @pytest.fixture
 def runner() -> CliRunner:
     return CliRunner()
+
+
+@pytest.fixture
+def no_keychain(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keychain недоступен, как на Linux-сервере без Secret Service: любое обращение бросает."""
+    import keyring.errors
+
+    def broken(*args, **kwargs):
+        raise keyring.errors.NoKeyringError("No recommended backend was available.")
+
+    for name in ("get_password", "set_password", "delete_password"):
+        monkeypatch.setattr(f"yandex_oauth.credentials.keyring.{name}", broken)
+
+
+@pytest.fixture
+def env_creds(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("YANDEX_OAUTH_YANDEX_REFRESH_TOKEN", "rt-env")
+    monkeypatch.setenv("YANDEX_OAUTH_YANDEX_CLIENT_ID", "cid-env")
+    monkeypatch.setenv("YANDEX_OAUTH_YANDEX_CLIENT_SECRET", "sec-env")

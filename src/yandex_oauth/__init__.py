@@ -4,8 +4,11 @@
 keychain для всех инструментов (ym, ywm, …): вход делается один раз, токен
 обновляется сам. Инструмент описывает себя `Profile` и получает:
 
-- `CredentialStore(profile)` — keychain ОС + переменные окружения `<CLI>_YANDEX_<FIELD>`;
-- `TokenStore(profile, credentials)` — где лежит токен, не истёк ли, автообновление по refresh_token;
+- `CredentialStore(profile)` — keychain ОС + переменные окружения `YANDEX_OAUTH_YANDEX_<FIELD>`
+  (без keychain — только переменные окружения);
+- `TokenStore(profile, credentials)` — где лежит токен, не истёк ли, автообновление по refresh_token
+  (в режиме «только env» — в памяти процесса);
+- `status` — отчёт для `<cli> auth status --json` по контракту §8 стандарта tools;
 - `oauth` — ссылка на согласие, обмен кода, refresh;
 - `make_auth_app(...)` — готовая Typer-команда `auth login|refresh|logout|status`.
 """
@@ -14,6 +17,7 @@ from __future__ import annotations
 
 from .credentials import CredentialStore
 from .profile import Profile
+from .status import credential_status, status_exit_code, status_report
 from .token import TokenStore
 
-__all__ = ["Profile", "CredentialStore", "TokenStore"]
+__all__ = ["Profile", "CredentialStore", "TokenStore", "credential_status", "status_report", "status_exit_code"]

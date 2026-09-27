@@ -20,10 +20,13 @@ uv run scripts/release.py patch|minor|major       # релиз с main: тег v
 - `errors.py` — `CliError` (общий базовый класс: `output.guard` инструментов ловит именно его), `InvalidArguments`, `AuthRequired(profile)`, `CredentialStoreUnavailable(profile, reason)`
 - `credentials.py` — `CredentialStore(profile)`: keychain `yandex-oauth:<provider>` через `keyring`, env-переопределение полей `YANDEX_OAUTH_<PROVIDER>_<FIELD>`
 - `oauth.py` — `TokenSet`, `authorize_url`, `parse_manual_token`, `exchange_code`, `refresh_access_token`, `app_credentials_from_env()` (`YANDEX_CLIENT_ID`/`YANDEX_CLIENT_SECRET` — общие для всех инструментов, без префикса)
-- `token.py` — `TokenStore(profile, credentials)`: `stored/source/resolve/refresh/store_token_set/retry_token_after/delete`; константы `FIELDS`, `REFRESH_BEFORE` (30 дн.), `REFRESH_AFTER` (90 дн.), `INVALID_TOKEN_RE` (Вебмастер `INVALID_OAUTH_TOKEN`, Метрика `invalid_token`)
+- `token.py` — `TokenStore(profile, credentials)`: `stored/source/resolve/refresh/store_token_set/retry_token_after/delete`; режим «только env» (`env_only()`: задан `YANDEX_OAUTH_YANDEX_REFRESH_TOKEN` или keychain недоступен) — токен в памяти процесса (`_memory`), keychain не пишется; константы `FIELDS`, `REFRESH_BEFORE` (30 дн.), `REFRESH_AFTER` (90 дн.), `INVALID_TOKEN_RE` (Вебмастер `INVALID_OAUTH_TOKEN`, Метрика `invalid_token`)
+- `status.py` — `credential_status/status_report/status_exit_code`: контракт `auth status --json` из §8 `~/Projects/tools/docs/standard-release.md` (форма покрыта тестом — менять = ломающее изменение)
 - `auth_command.py` — `make_auth_app(profile, store, output, check=None)`; `_ask` (вопросы в stderr, байтовый ввод, только печатный ASCII); интерактивные подсказки — тоже в stderr, stdout чист для `--json`
 
-**Никаких `.env`:** секреты только в keychain и переменных окружения (пользовательское решение 2026-09-17 — `.env.shared` удалён). Порядок: `--token` → `$TOKEN_ENV` → keychain.
+**Никаких `.env`:** секреты только в keychain и переменных окружения (пользовательское решение 2026-09-17 — `.env.shared` удалён). Порядок: `--token` → `$TOKEN_ENV` → env-режим (`YANDEX_OAUTH_YANDEX_REFRESH_TOKEN`) → keychain. Схема имён env — в README («Переменные окружения»).
+
+**Keychain недоступен — не ошибка чтения** (серверы на Linux, `doppler run`): `get_credential` логирует предупреждение и работает от env; ошибка только при записи/удалении.
 
 **Инварианты, которые нельзя ломать (на них завязаны тесты инструментов):**
 - Общие функции вызываются через атрибут модуля (`oauth.exchange_code`, `oauth.refresh_access_token`, `keyring.set_password`), чтобы тесты инструментов могли патчить `ywm.commands.auth.oauth.exchange_code` / `ywm.core.token.oauth.refresh_access_token` / `<pkg>.credentials.manager.keyring.*` через реэкспорт того же объекта модуля.
