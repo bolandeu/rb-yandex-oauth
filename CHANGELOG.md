@@ -5,6 +5,13 @@
 
 <!-- towncrier release notes start -->
 
+## [0.3.1] - 2026-09-29
+
+### Changed
+
+- Инструменты разработки приведены к шаблону cli-generator v1.2.7 (release.py, хук docstring по `@app.command`, ty: предупреждения не валят гейт). Пакет не изменился.
+
+
 ## [0.3.0] - 2026-09-27
 
 ### Changed
