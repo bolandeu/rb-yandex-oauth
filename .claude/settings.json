@@ -9,7 +9,7 @@
           },
           {
             "type": "command",
-            "command": "n=\"$CLAUDE_PROJECT_DIR/../scripts/herdr_name.sh\"; [ -x \"$n\" ] || n=\"$HOME/Projects/tools/scripts/herdr_name.sh\"; [ -x \"$n\" ] && \"$n\" || true"
+            "command": "n=\"$CLAUDE_PROJECT_DIR/../scripts/herdr_name.sh\"; [ -x \"$n\" ] || n=\"$HOME/Work/tools/scripts/herdr_name.sh\"; [ -x \"$n\" ] && \"$n\" || true"
           }
         ]
       }

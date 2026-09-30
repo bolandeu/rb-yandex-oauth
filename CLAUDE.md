@@ -14,7 +14,7 @@ uv run scripts/release.py patch|minor|major       # релиз с main: тег v
 
 ## Что это
 
-Общая библиотека OAuth-авторизации Яндекса для CLI-инструментов `~/Projects/tools/` (`ym`, `ywm`, …), построенных по единой CLI-архитектуре (skill `cli-generator:cli-builder`). Не CLI сама по себе — подключается как git-зависимость на релизный тег (`[tool.uv.sources]`), см. README и `~/Projects/tools/docs/standard-release.md`.
+Общая библиотека OAuth-авторизации Яндекса для CLI-инструментов `~/Work/tools/` (`ym`, `ywm`, …), построенных по единой CLI-архитектуре (skill `cli-generator:cli-builder`). Не CLI сама по себе — подключается как git-зависимость на релизный тег (`[tool.uv.sources]`), см. README и `~/Work/tools/docs/standard-release.md`.
 
 **Source layout:** `src/yandex_oauth/`
 
@@ -23,7 +23,7 @@ uv run scripts/release.py patch|minor|major       # релиз с main: тег v
 - `credentials.py` — `CredentialStore(profile)`: keychain `yandex-oauth:<provider>` через `keyring`, env-переопределение полей `YANDEX_OAUTH_<PROVIDER>_<FIELD>`
 - `oauth.py` — `TokenSet`, `authorize_url`, `parse_manual_token`, `exchange_code`, `refresh_access_token`, `app_credentials_from_env()` (`YANDEX_CLIENT_ID`/`YANDEX_CLIENT_SECRET` — общие для всех инструментов, без префикса)
 - `token.py` — `TokenStore(profile, credentials)`: `stored/source/resolve/refresh/store_token_set/retry_token_after/delete`; режим «только env» (`env_only()`: задан `YANDEX_OAUTH_YANDEX_REFRESH_TOKEN` или keychain недоступен) — токен в памяти процесса (`_memory`), keychain не пишется; константы `FIELDS`, `REFRESH_BEFORE` (30 дн.), `REFRESH_AFTER` (90 дн.), `INVALID_TOKEN_RE` (Вебмастер `INVALID_OAUTH_TOKEN`, Метрика `invalid_token`)
-- `status.py` — `health_check(store, check)` → `Health` (делегат для `Provider.health_check()` инструментов по шаблону: 10 с, маппинг ошибок, маскирование секретов) и `credential_status/status_report/status_problems/status_exit_code`: контракт `auth status --json` из §8 `~/Projects/tools/docs/standard-release.md` (форма покрыта `tests/test_status.py` — менять = ломающее изменение)
+- `status.py` — `health_check(store, check)` → `Health` (делегат для `Provider.health_check()` инструментов по шаблону: 10 с, маппинг ошибок, маскирование секретов) и `credential_status/status_report/status_problems/status_exit_code`: контракт `auth status --json` из §8 `~/Work/tools/docs/standard-release.md` (форма покрыта `tests/test_status.py` — менять = ломающее изменение)
 - `auth_command.py` — `make_auth_app(profile, store, output, check=None)`; `_ask` (вопросы в stderr, байтовый ввод, только печатный ASCII); интерактивные подсказки — тоже в stderr, stdout чист для `--json`. Docstring'и команд — литеральные, с подстановками `{cli}`/`{token_env}`/… и строкой `Example:` (§7): их проверяют `scripts/check_command_docstrings.py` (хуки; glob адаптирован под `auth_command.py`), `tests/test_help.py` и снапшоты `tests/snapshots/help/`
 
 **Никаких `.env`:** секреты только в keychain и переменных окружения (пользовательское решение 2026-09-17 — `.env.shared` удалён). Порядок: `--token` → `$TOKEN_ENV` → env-режим (`YANDEX_OAUTH_YANDEX_REFRESH_TOKEN`) → keychain. Схема имён env — в README («Переменные окружения»).
@@ -45,13 +45,13 @@ changelog закончено только после релиза: влить в
 `uv run scripts/release.py patch|minor|major` → попросить пользователя
 сделать push с `--follow-tags` → назвать новый тег в отчёте. Служебные коммиты
 (без фрагмента) ждут следующего релиза. Не оставлять фрагмент на `main` без
-релиза, не назвав причину (`~/Projects/tools/docs/standard-release.md` §3).
+релиза, не назвав причину (`~/Work/tools/docs/standard-release.md` §3).
 
 ## Инструмент в системе
 
-Инструмент — один из сервисов `~/Projects/tools/`: корневой агент его
+Инструмент — один из сервисов `~/Work/tools/`: корневой агент его
 деплоит, хранит ключи (Doppler) и бэкапит данные (S3). Полные правила —
-`~/Projects/tools/docs/standard-release.md` §13.
+`~/Work/tools/docs/standard-release.md` §13.
 
 - **Сообщать корневому агенту** (в отчёте пользователю, рядом с тегом
   релиза): новая или переименованная переменная окружения / ключ, новая
