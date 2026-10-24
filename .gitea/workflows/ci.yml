@@ -1,0 +1,50 @@
+name: ci
+
+# Mandatory (the Standard, CI): the gate (`rb-release check` through uvx, at the template tag).
+# Gitea Actions runs this one job on the runner labelled `docker`, on the lowest supported Python.
+on:
+  push:
+    branches: [main, "antagor/publish-*"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gate:
+    runs-on: docker
+    container:
+      image: node:22-bookworm
+      options: --init
+      volumes:
+        - ci-cache:/cache
+    env:
+      UV_CACHE_DIR: /cache/uv
+      XDG_CACHE_HOME: /cache/xdg
+      UV_PYTHON_INSTALL_DIR: /cache/python
+      UV_LINK_MODE: copy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # tags: the build's version comes from them
+      - name: uv
+        run: |
+          mkdir -p /cache/bin
+          [ -x /cache/bin/uv ] || curl -LsSf --max-time 300 https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/cache/bin UV_NO_MODIFY_PATH=1 sh
+          echo /cache/bin >> "$GITHUB_PATH"
+      # Scanners the gate runs when present; pinned, cached per version
+      # (a new pin downloads anew), linked onto PATH under the plain name.
+      - name: osv-scanner and gitleaks
+        run: |
+          mkdir -p /cache/bin
+          osv=/cache/bin/osv-scanner-2.7.0
+          [ -x $osv ] || { curl -LsSf --max-time 300 -o $osv https://github.com/google/osv-scanner/releases/download/v2.7.0/osv-scanner_linux_amd64 && chmod +x $osv; }
+          gitleaks=/cache/bin/gitleaks-8.30.1
+          [ -x $gitleaks ] || { curl -LsSf --max-time 300 https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz | tar -xzO gitleaks > $gitleaks && chmod +x $gitleaks; }
+          ln -sf $osv /usr/local/bin/osv-scanner
+          ln -sf $gitleaks /usr/local/bin/gitleaks
+      # Lowest Python allowed by requires-python, so CI tests the oldest interpreter users may have.
+      - name: Lowest supported Python
+        run: echo "UV_PYTHON=$(grep -m1 '^requires-python' pyproject.toml | grep -oE '[0-9]+\.[0-9]+' | head -1)" >> "$GITHUB_ENV"
+      - name: Gate
+        run: |
+          uvx --from "git+https://homeserver.tailee01ab.ts.net:3000/bolandeu/cli-generator.git@v1.27.3#subdirectory=gate" rb-release check
