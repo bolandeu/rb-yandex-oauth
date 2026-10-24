@@ -23,3 +23,6 @@ in_review = "In Review"
 publish = "Publishing"
 done = "Done"
 cancelled = "Cancelled"
+
+[daemon]
+enabled = true
