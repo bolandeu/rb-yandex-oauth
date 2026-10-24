@@ -1,0 +1,24 @@
+schema = 1
+prefix = "YAOAUTH"
+name = "yandex-oauth"
+worker = "claude-code"
+
+[review]
+required_types = ["feature", "bugfix"]  # chore and docs: the short path without review
+
+[connector]
+webhook_secret = "PLANE_WEBHOOK_SECRET_TOOLS"
+kind = "plane"
+base_url = "https://homeserver.tailee01ab.ts.net:8443"
+workspace = "tools"
+project_id = "4ade7eae-25f4-4e06-b0df-dd7b367bae33"
+humans = ["r.bolandau@gmail.com"]
+
+[connector.states]
+ideas = "Backlog"
+queue = "Todo"
+in_progress = "In Progress"
+in_review = "In Review"
+publish = "Publishing"
+done = "Done"
+cancelled = "Cancelled"
