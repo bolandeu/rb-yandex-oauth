@@ -11,7 +11,7 @@
 | `TokenStore(profile, credentials)` | Где лежит токен, срок действия, автообновление по refresh_token (за 30 дней до истечения, не реже раза в 90 дней), `retry_token_after()` для повтора запроса при 403 «токен протух» |
 | `oauth` | Ссылка на согласие, обмен кода на токен, refresh, разбор «ручного» адреса `verification_code#access_token=…` |
 | `make_auth_app(profile, store, output, check=…)` | Готовая Typer-команда `auth login / refresh / logout / status [--check]` |
-| `health_check(store, check)` → `Health` | Делегат для `Provider.health_check()` инструмента по шаблону cli-generator: `status` / `expires_at` / `quota` / `message` одинаково у всех Яндекс-инструментов (§8 стандарта `~/Projects/tools/docs/standard-release.md`); 10 с на проверку, 401/403 → `invalid`, сеть/429/5xx → `unreachable` |
+| `health_check(store, check)` → `Health` | Делегат для `Provider.health_check()` инструмента по шаблону cli-generator: `status` / `expires_at` / `quota` / `message` одинаково у всех Яндекс-инструментов (§8 стандарта `~/Work/tools/docs/standard-release.md`); 10 с на проверку, 401/403 → `invalid`, сеть/429/5xx → `unreachable` |
 | `credential_status`, `status_report`, `status_problems`, `status_exit_code` | Отчёт `auth status --json` по §8 целиком (для `make_auth_app`): `source`, `source_ref`, `status`, `expires_at`, без значений секретов |
 
 Порядок поиска токена везде одинаковый: `--token` → `$<TOKEN_ENV>` (CI/скрипты) → `YANDEX_OAUTH_YANDEX_REFRESH_TOKEN` из окружения (режим «только env») → общий keychain.
