@@ -12,6 +12,7 @@ required_types = ["feature", "bugfix"]  # chore and docs: the short path without
 [publish]
 versioning = "semver"
 changelog = "CHANGELOG.md"
+deploy_command = "git push origin main --follow-tags"
 gate = "remote"
 gate_status_url = "https://homeserver.tailee01ab.ts.net:3000/api/v1/repos/bolandeu/yandex-oauth/commits/{commit}/status"
 
