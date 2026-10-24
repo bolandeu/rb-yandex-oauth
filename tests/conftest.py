@@ -4,14 +4,18 @@ from __future__ import annotations
 
 import os
 
-import pytest
-import typer
-from typer.testing import CliRunner
+# Typer reads these once, at import: pin the help rendering (no colour, fixed width) so it is the same on a
+# terminal and under the CI variables (GITHUB_ACTIONS, FORCE_COLOR, PY_COLORS) that force a terminal.
+os.environ.update({"TERMINAL_WIDTH": "100", "_TYPER_FORCE_DISABLE_TERMINAL": "1", "NO_COLOR": "1"})
 
-from yandex_oauth import CredentialStore, Profile, TokenStore
-from yandex_oauth.auth_command import make_auth_app
+import pytest  # noqa: E402
+import typer  # noqa: E402
+from typer.testing import CliRunner  # noqa: E402
 
-from . import fake_output
+from yandex_oauth import CredentialStore, Profile, TokenStore  # noqa: E402
+from yandex_oauth.auth_command import make_auth_app  # noqa: E402
+
+from . import fake_output  # noqa: E402
 
 PROFILE = Profile(cli_name="demo", token_env="YANDEX_DEMO_TOKEN", scopes="demo:read", service="Демо")
 KEY = ("yandex-oauth:yandex", "yandex")  # общий слот для всех инструментов
