@@ -3,6 +3,26 @@
 Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 Версии выпускает Antagor (`antagor publish`); разделы релизов руками не правят.
 
+## v0.4.0 — 2026-10-24
+
+### Main
+
+- chore(antagor): publish settings, checks, heavy
+- daemon: enabled
+- mode: fast
+- antagor init: project yandex-oauth (YAOAUTH)
+- build: relock without towncrier; README path
+- ci: Gitea workflow runs the gate
+- chore: remove old release tooling (release.py, towncrier, githooks, GitHub CI); add AGENTS.md
+- fix(deps): certifi 2026.10.19 (PYSEC-2026-4320)
+- build: [tool.rb.install] for a library, coverage core ctrace
+- test: pin help rendering env so snapshots hold under CI variables
+- chore: пути ~/Projects → ~/Work после переезда
+- chore(hooks): скрипты tools ищутся относительно репозитория (перенос tools не ломает хуки)
+- chore(claude): при старте сессии агент берёт имя в herdr по команде
+- chore(hooks): pre-push сообщает корневому агенту tools о пушнутых тегах
+
+
 ## [0.3.1] - 2026-09-29
 
 ### Changed
