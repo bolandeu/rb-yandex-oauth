@@ -1,9 +1,7 @@
 # Changelog
 
 Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
-Между релизами этот файл не правят: изменения — фрагментами в `changelog.d/` (`uv run towncrier create +<slug>.<type>.md -c "…"`), `scripts/release.py` собирает их сюда.
-
-<!-- towncrier release notes start -->
+Версии выпускает Antagor (`antagor publish`); разделы релизов руками не правят.
 
 ## [0.3.1] - 2026-09-29
 

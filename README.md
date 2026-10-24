@@ -83,16 +83,12 @@ if not resp.is_success and self._refreshable:
 ```bash
 uv sync
 uv run pytest
-uv run scripts/release.py --check   # весь гейт: lock, ruff, ty, pytest, фрагмент, сборка wheel, osv-scanner
-scripts/install_hooks.sh            # один раз на клон: git-хуки из .githooks/ (сессии Claude Code — сами)
+uv run ruff check . && uv run ruff format --check . && uv run ty check
 ```
 
-Справка команд `auth` — это docstring'и в `auth_command.py` (подстановки `{cli}`, `{token_env}`… и обязательная строка `Example:`). Поменяли поведение команды — поменяйте её docstring в том же коммите: иначе остановят хуки (`.claude/settings.json`, `.githooks/pre-commit`, `scripts/check_command_docstrings.py`). Снапшоты справки для профиля `demo` — `tests/snapshots/help/`, обновление: `uv run pytest --snapshot-update` и прочитать diff.
+Гейт — шаг `rb-release check` в `.gitea/workflows/ci.yml` (та же строка запускается локально). Справка команд `auth` — это docstring'и в `auth_command.py` (подстановки `{cli}`, `{token_env}`… и обязательная строка `Example:`). Поменяли поведение команды — поменяйте её docstring в том же коммите; снапшоты справки для профиля `demo` — `tests/snapshots/help/`, обновление: `uv run pytest --snapshot-update` и прочитать diff.
 
 ## Версии и релизы
 
-Стандарт — `~/Projects/tools/docs/standard-release.md`.
-
 - Версии в `pyproject.toml` нет: она берётся из git-тега `vX.Y.Z` (uv-dynamic-versioning), в коде — `importlib.metadata.version("rb-yandex-oauth")`.
-- `CHANGELOG.md` руками не правят. Каждое заметное изменение — фрагмент: `uv run towncrier create +<slug>.<type>.md -c "…"` (типы: added, changed, deprecated, removed, fixed, security).
-- Релиз с `main`: `uv run scripts/release.py patch|minor|major` — гейт, сборка CHANGELOG, коммит `Release vX.Y.Z`, аннотированный тег. Push скрипт не делает, печатает команду.
+- Релиз — `antagor publish` (Antagor ставит тег; `CHANGELOG.md` и теги руками не правят).

@@ -1,7 +1,0 @@
-#!/bin/sh
-# Before a push: tell the root tools agent about pushed v* tags (../scripts/notify_release.sh
-# of the tools root this repo sits in). Never blocks the push.
-n="$(git rev-parse --show-toplevel)/../scripts/notify_release.sh"
-[ -x "$n" ] || n="$HOME/Work/tools/scripts/notify_release.sh"
-[ -x "$n" ] && "$n" "$(basename "$(git rev-parse --show-toplevel)")"
-exit 0
