@@ -26,6 +26,10 @@ vcs = "git"
 style = "pep440"
 fallback-version = "0.0.0"
 
+[tool.rb.install]
+homeserver = []  # library: nobody runs it
+mac = false
+
 [tool.uv]
 cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true } }]
 
@@ -41,6 +45,7 @@ addopts = "--cov --cov-report=term-missing:skip-covered"
 
 [tool.coverage.run]
 source = ["src"]
+core = "ctrace"  # 3.14: default core grows memory per CLI invoke
 
 [tool.coverage.report]
 # Текущий уровень покрытия — планка не ниже; поднимать, не опускать.
