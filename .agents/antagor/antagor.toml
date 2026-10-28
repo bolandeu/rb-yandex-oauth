@@ -6,6 +6,9 @@ worker = "claude-code"
 checks = ["python3 scripts/check_command_docstrings.py"]
 heavy = ["rb-release check"]
 
+# the workserver, 48 cores (the Human 28.10: at least four tasks at once); heavy checks queue on the machine
+parallel = 4
+
 [review]
 required_types = ["feature", "bugfix"]  # chore and docs: the short path without review
 
