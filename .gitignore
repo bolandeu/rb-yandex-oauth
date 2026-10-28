@@ -8,3 +8,5 @@ dist/
 .python-version
 .coverage
 htmlcov/
+.DS_Store
+Thumbs.db
