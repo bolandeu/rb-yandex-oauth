@@ -13,7 +13,7 @@ uv run ruff check . && uv run ruff format --check . && uv run ty check
 uv run pytest --snapshot-update    # после правки docstring/help= команд auth — и прочитать diff
 ```
 
-Гейт (`rb-release check` через uvx на теге шаблона) записан только в `.gitea/workflows/ci.yml`; запускать ту же строку оттуда.
+Гейт — `gate check`, он идёт на этой машине: команда — `[publish] gate_command` в `.agents/antagor/antagor.toml`, её и запускают перед коммитом. Workflow гейт не запускает.
 Релиз — через Antagor (`antagor publish`), версия только в git-теге; `CHANGELOG.md` и теги руками не трогать.
 
 ## Что это

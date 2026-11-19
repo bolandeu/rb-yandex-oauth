@@ -86,7 +86,7 @@ uv run pytest
 uv run ruff check . && uv run ruff format --check . && uv run ty check
 ```
 
-Гейт — шаг `rb-release check` в `.gitea/workflows/ci.yml` (та же строка запускается локально). Справка команд `auth` — это docstring'и в `auth_command.py` (подстановки `{cli}`, `{token_env}`… и обязательная строка `Example:`). Поменяли поведение команды — поменяйте её docstring в том же коммите; снапшоты справки для профиля `demo` — `tests/snapshots/help/`, обновление: `uv run pytest --snapshot-update` и прочитать diff.
+Гейт — `gate check`, он идёт на этой машине до коммита (`.agents/antagor/antagor.toml`). Справка команд `auth` — это docstring'и в `auth_command.py` (подстановки `{cli}`, `{token_env}`… и обязательная строка `Example:`). Поменяли поведение команды — поменяйте её docstring в том же коммите; снапшоты справки для профиля `demo` — `tests/snapshots/help/`, обновление: `uv run pytest --snapshot-update` и прочитать diff.
 
 ## Версии и релизы
 
