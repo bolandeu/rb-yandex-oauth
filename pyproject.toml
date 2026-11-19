@@ -7,6 +7,7 @@ authors = [{ name = "bolandau" }]
 dependencies = [
     "httpx>=0.27",
     "keyring>=25.0",
+    "rb-credentials>=0.3.1,<1",
     "typer>=0.27,<0.29",
 ]
 
@@ -86,3 +87,11 @@ select = ["E4", "E7", "E9", "F", "I", "UP", "S"]
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "S105", "S106", "S107"]  # assert — смысл теста; фейковые токены — не секреты
 "scripts/*" = ["S603", "S607"]  # subprocess с фиксированным argv (git, uv), без shell
+
+[tool.uv.sources]
+rb-credentials = { index = "gitea" }
+
+[[tool.uv.index]]
+name = "gitea"
+url = "https://homeserver.tailee01ab.ts.net:3000/api/packages/bolandeu/pypi/simple"
+explicit = true
