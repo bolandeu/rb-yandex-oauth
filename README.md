@@ -22,14 +22,14 @@
 
 | Переменная | Статус | Зачем |
 |---|---|---|
-| `YANDEX_OAUTH_YANDEX_REFRESH_TOKEN`, `YANDEX_OAUTH_YANDEX_CLIENT_ID`, `YANDEX_OAUTH_YANDEX_CLIENT_SECRET` | **основная** | Сервер без keychain (`doppler run`): access-токен получается по refresh_token при первом запросе и обновляется в памяти процесса; в keychain ничего не пишется. Если задан `…_REFRESH_TOKEN`, keychain не читается вовсе |
+| `YANDEX_OAUTH_YANDEX_REFRESH_TOKEN`, `YANDEX_OAUTH_YANDEX_CLIENT_ID`, `YANDEX_OAUTH_YANDEX_CLIENT_SECRET` | **основная** | Сервер без keychain (запуск с переменными окружения из секрет-менеджера): access-токен получается по refresh_token при первом запросе и обновляется в памяти процесса; в keychain ничего не пишется. Если задан `…_REFRESH_TOKEN`, keychain не читается вовсе |
 | `YANDEX_OAUTH_YANDEX_<FIELD>` (`TOKEN`, `EXPIRES_AT`, …) | основная | Переопределить одно поле из keychain |
 | `YANDEX_CLIENT_ID`, `YANDEX_CLIENT_SECRET` | legacy | OAuth-приложение для `auth login`; в режиме «только env» — запасной вариант для `…_CLIENT_ID/SECRET`. Новое — задавать под основными именами |
 | `<TOKEN_ENV>` инструмента (`YANDEX_METRIKA_TOKEN`, `YANDEX_WEBMASTER_TOKEN`) | legacy | Готовый access-токен без автообновления — только для одного инструмента и разовых запусков |
 
 Keychain недоступен (Linux без Secret Service, контейнер) — чтение не падает, работаем от переменных окружения; не хватает части полей — ошибка `CREDENTIALS_INCOMPLETE` (exit 3) с именами недостающих переменных. `auth login` без keychain сохранить токен не может (`CREDENTIAL_STORE_UNAVAILABLE`).
 
-Яндекс при обновлении выдаёт новый refresh_token, но старый продолжает работать (проверено 2026-09-27) — перезапуск с тем же значением из Doppler безопасен. Срок жизни ограничен: `auth status --json` показывает `expires_at`, заранее перевыпустите refresh_token (`auth login` на Mac → новое значение в Doppler).
+Яндекс при обновлении выдаёт новый refresh_token, но старый продолжает работать (проверено 2026-09-27) — перезапуск с тем же значением из секрет-менеджер безопасен. Срок жизни ограничен: `auth status --json` показывает `expires_at`, заранее перевыпустите refresh_token (`auth login` на Mac → новое значение в секрет-менеджер).
 `auth login` без `--token` всегда получает **новый** токен (OAuth через браузер) и кладёт его в общий слот; старый из окружения не копируется (только под `--non-interactive`). Файлы `.env` не читаются: секреты живут только в keychain и переменных окружения.
 
 Репозиторий: https://github.com/bolandeu/yandex-oauth. Инструменты подключают его как git-зависимость, закреплённую на релизном теге.

@@ -6,7 +6,7 @@ token, refresh_token, issued_at, expires_at (ISO-8601 UTC), client_id, client_se
 (т.е. токен получен через `<cli> auth login` OAuth-потоком, а не вставлен вручную).
 Любое поле переопределяется переменной окружения `YANDEX_OAUTH_YANDEX_<FIELD>`.
 
-Режим «только env» (сервер без keychain, `doppler run`): задан
+Режим «только env» (сервер без keychain, запуск с переменными окружения из секрет-менеджера): задан
 `YANDEX_OAUTH_YANDEX_REFRESH_TOKEN` или keychain недоступен. Тогда keychain не
 читается и не пишется: access-токен получается по refresh_token при первом
 обращении и обновляется только в памяти процесса.

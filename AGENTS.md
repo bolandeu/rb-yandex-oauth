@@ -32,7 +32,7 @@ uv run pytest --snapshot-update    # после правки docstring/help= к�
 
 **Никаких `.env`:** секреты только в keychain и переменных окружения (пользовательское решение 2026-09-17 — `.env.shared` удалён). Порядок: `--token` → `$TOKEN_ENV` → env-режим (`YANDEX_OAUTH_YANDEX_REFRESH_TOKEN`) → keychain. Схема имён env — в README («Переменные окружения»).
 
-**Keychain недоступен — не ошибка чтения** (серверы на Linux, `doppler run`): `get_credential` логирует предупреждение и работает от env; ошибка только при записи/удалении.
+**Keychain недоступен — не ошибка чтения** (серверы на Linux, запуск с переменными окружения из секрет-менеджера): `get_credential` логирует предупреждение и работает от env; ошибка только при записи/удалении.
 
 **Инварианты, которые нельзя ломать (на них завязаны тесты инструментов):**
 - Общие функции вызываются через атрибут модуля (`oauth.exchange_code`, `oauth.refresh_access_token`, `keyring.set_password`), чтобы тесты инструментов могли патчить `ywm.commands.auth.oauth.exchange_code` / `ywm.core.token.oauth.refresh_access_token` / `<pkg>.credentials.manager.keyring.*` через реэкспорт того же объекта модуля.
@@ -49,7 +49,7 @@ uv run pytest --snapshot-update    # после правки docstring/help= к�
 ## Инструмент в системе
 
 Инструмент — один из сервисов `~/Work/tools/`: корневой агент его
-деплоит, хранит ключи (Doppler) и бэкапит данные (S3). Полные правила —
+деплоит, хранит ключи (секрет-менеджер) и бэкапит данные (S3). Полные правила —
 `~/Work/tools/docs/standard-release.md` §13.
 
 - **Сообщать корневому агенту** (в отчёте пользователю, рядом с тегом
