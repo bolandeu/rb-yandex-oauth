@@ -18,7 +18,7 @@ uv run pytest --snapshot-update    # после правки docstring/help= к�
 
 ## Что это
 
-Общая библиотека OAuth-авторизации Яндекса для CLI-инструментов `~/Work/tools/` (`ym`, `ywm`, …), построенных по единой CLI-архитектуре (skill `cli-generator:cli-builder`). Не CLI сама по себе — подключается как git-зависимость на релизный тег (`[tool.uv.sources]`), см. README и `~/Work/tools/docs/standard-release.md`.
+Общая библиотека OAuth-авторизации Яндекса для CLI-инструментов `~/Work/tools/` (`ym`, `ywm`, …), построенных по единой CLI-архитектуре (skill `python-package-gate:cli-builder`). Не CLI сама по себе — подключается как git-зависимость на релизный тег (`[tool.uv.sources]`), см. README и `~/Work/tools/docs/standard-release.md`.
 
 **Source layout:** `src/yandex_oauth/`
 
