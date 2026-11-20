@@ -89,9 +89,5 @@ select = ["E4", "E7", "E9", "F", "I", "UP", "S"]
 "scripts/*" = ["S603", "S607"]  # subprocess с фиксированным argv (git, uv), без shell
 
 [tool.uv.sources]
-rb-credentials = { index = "gitea" }
+rb-credentials = { path = "../rb-credentials" }
 
-[[tool.uv.index]]
-name = "gitea"
-url = "https://homeserver.tailee01ab.ts.net:3000/api/packages/bolandeu/pypi/simple"
-explicit = true
