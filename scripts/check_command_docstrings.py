@@ -33,7 +33,6 @@ from pathlib import Path
 
 DEFAULT_COMMAND_FILES = ("src/*/commands/*.py",)
 
-
 @functools.cache
 def command_globs() -> tuple[str, ...]:
     """Where commands live: `[tool.cli-generator] commands` in pyproject.toml (a glob or a list), else the default.
@@ -51,21 +50,17 @@ def command_globs() -> tuple[str, ...]:
     value = config.get("commands", DEFAULT_COMMAND_FILES)
     return (value,) if isinstance(value, str) else tuple(value)
 
-
 def is_command_file(path: str) -> bool:
     return any(fnmatch.fnmatch(path, pattern) for pattern in command_globs())
-
 
 def _git(*args: str) -> str | None:
     result = subprocess.run(["git", *args], capture_output=True, text=True, check=False)
     return result.stdout if result.returncode == 0 else None
 
-
 def _is_command_decorator(decorator: ast.expr) -> bool:
     """`@output.guard`, or a Typer registration: `@app.command`, `@app.command("name")`, `@group.command(...)`."""
     target = decorator.func if isinstance(decorator, ast.Call) else decorator
     return ast.unparse(target).split(".")[-1] in ("guard", "command")
-
 
 def _doc_assignments(tree: ast.Module) -> dict[str, str]:
     """`name.__doc__ = <expr>` at module level (e.g. an f-string help text) -> the expression's source."""
@@ -76,7 +71,6 @@ def _doc_assignments(tree: ast.Module) -> dict[str, str]:
             if isinstance(target, ast.Attribute) and target.attr == "__doc__" and isinstance(target.value, ast.Name):
                 assigned[target.value.id] = ast.unparse(node.value)
     return assigned
-
 
 def _commands(source: str) -> dict[str, tuple[str | None, str]]:
     """Map command name -> (docstring, normalized signature + body excluding the docstring).
@@ -98,7 +92,6 @@ def _commands(source: str) -> dict[str, tuple[str | None, str]]:
         body = node.body[1:] if literal is not None else node.body
         commands[node.name] = (docstring, "\n".join(ast.dump(part) for part in (node.args, *body)))
     return commands
-
 
 def stale_commands(paths: list[str], *, staged: bool) -> list[str]:
     """Commands in `paths` (repo-relative) whose logic differs from HEAD while their docstring doesn't.
@@ -123,7 +116,6 @@ def stale_commands(paths: list[str], *, staged: bool) -> list[str]:
                 stale.append(f"{path}: command `{name}` changed its logic, but its docstring (--help) did not")
     return stale
 
-
 def _report(stale: list[str], footer: str) -> None:
     print("Command help is out of date:", file=sys.stderr)
     for item in stale:
@@ -135,12 +127,10 @@ def _report(stale: list[str], footer: str) -> None:
     )
     print(footer, file=sys.stderr)
 
-
 def _changed_command_files() -> list[str]:
     tracked = (_git("diff", "--name-only", "HEAD") or "").splitlines()
     untracked = (_git("ls-files", "--others", "--exclude-standard") or "").splitlines()
     return [p for p in tracked + untracked if is_command_file(p)]
-
 
 def main(argv: list[str]) -> int:
     root = _git("rev-parse", "--show-toplevel")
@@ -188,7 +178,6 @@ def main(argv: list[str]) -> int:
         )
         return 1
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Стандарт CLI: https://homeserver.tailee01ab.ts.net:3000/bolandeu/cli-generator/src/branch/main/skills/cli-builder/reference/standard.md
+Стандарт CLI: https://github.com/bolandeu/python-package-gate/blob/main/skills/cli-builder/reference/standard.md
 (разделы Technology, Install, CI, Release). Пакет — библиотека (нет команды): `[tool.rb.install]` `homeserver = []`, `mac = false`;
 правила Commands/Output/Errors/Health к ней не применяются (гейт пропускает их).
 
