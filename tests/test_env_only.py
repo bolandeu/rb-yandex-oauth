@@ -7,13 +7,13 @@ from unittest.mock import patch
 
 import pytest
 
-from yandex_oauth import CredentialStore, credential_status, status_exit_code, status_report
-from yandex_oauth.errors import CliError, CredentialStoreUnavailable
-from yandex_oauth.oauth import TokenSet
+from rb_yandex_oauth import CredentialStore, credential_status, status_exit_code, status_report
+from rb_yandex_oauth.errors import CliError, CredentialStoreUnavailable
+from rb_yandex_oauth.oauth import TokenSet
 
 from .conftest import KEY, PROFILE
 
-REFRESH = "yandex_oauth.oauth.refresh_access_token"
+REFRESH = "rb_yandex_oauth.oauth.refresh_access_token"
 
 
 class TestNoKeychain:

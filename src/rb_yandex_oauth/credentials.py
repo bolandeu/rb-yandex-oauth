@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-import keyring  # noqa: F401 — реэкспорт: тесты подменяют `yandex_oauth.credentials.keyring.*`
+import keyring  # noqa: F401 — реэкспорт: тесты подменяют `rb_yandex_oauth.credentials.keyring.*`
 from rb_credentials import Store, StoreUnavailable
 
 from .errors import CredentialStoreUnavailable

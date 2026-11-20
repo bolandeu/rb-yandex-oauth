@@ -20,7 +20,7 @@ uv run pytest --snapshot-update    # после правки docstring/help= к�
 
 Общая библиотека OAuth-авторизации Яндекса для CLI-инструментов `~/Work/tools/` (`ym`, `ywm`, …), построенных по единой CLI-архитектуре (skill `python-package-gate:cli-builder`). Не CLI сама по себе — подключается как git-зависимость на релизный тег (`[tool.uv.sources]`), см. README и `~/Work/tools/docs/standard-release.md`.
 
-**Source layout:** `src/yandex_oauth/`
+**Source layout:** `src/rb_yandex_oauth/`
 
 - `profile.py` — `Profile` (cli_name, token_env, scopes, service, provider, `keychain_namespace="yandex-oauth"`) — единственное, чем инструменты отличаются; слот keychain общий для всех (один вход — все инструменты)
 - `errors.py` — `CliError` (общий базовый класс: `output.guard` инструментов ловит именно его), `InvalidArguments`, `AuthRequired(profile)`, `CredentialStoreUnavailable(profile, reason)`, `CredentialsUnhealthy(profile, problems)` (exit 3 у `auth status`)

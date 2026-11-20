@@ -52,7 +52,7 @@ rb-yandex-oauth = { git = "https://github.com/bolandeu/yandex-oauth", tag = "v0.
 `constants.py`:
 
 ```python
-from yandex_oauth import Profile
+from rb_yandex_oauth import Profile
 
 PROFILE = Profile(cli_name="ym", token_env="YANDEX_METRIKA_TOKEN", scopes="metrika:read", service="Яндекс.Метрика")
 ```
@@ -63,7 +63,7 @@ PROFILE = Profile(cli_name="ym", token_env="YANDEX_METRIKA_TOKEN", scopes="metri
 
 ```python
 def health_check(self) -> Health:
-    return yandex_oauth.health_check(token_store.store, check=lambda: self.get_json("/management/v1/counters"))
+    return rb_yandex_oauth.health_check(token_store.store, check=lambda: self.get_json("/management/v1/counters"))
 ```
 
 Клиент API инструмента:

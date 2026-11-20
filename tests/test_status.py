@@ -15,9 +15,9 @@ import httpx
 import pytest
 import typer
 
-from yandex_oauth import Health, health_check, status_exit_code, status_problems, status_report
-from yandex_oauth.auth_command import _tool_version, make_auth_app
-from yandex_oauth.errors import AuthRequired, CliError
+from rb_yandex_oauth import Health, health_check, status_exit_code, status_problems, status_report
+from rb_yandex_oauth.auth_command import _tool_version, make_auth_app
+from rb_yandex_oauth.errors import AuthRequired, CliError
 
 from . import fake_output
 from .conftest import KEY, PROFILE
@@ -94,7 +94,7 @@ class TestEnvelope:
 
 class TestSources:
     def test_env_field_overrides_keychain(self, fake_keyring, store, monkeypatch):
-        from yandex_oauth import credential_status
+        from rb_yandex_oauth import credential_status
 
         fake_keyring[KEY] = json.dumps({"token": "t", "refresh_token": "r", "client_id": "c", "client_secret": "s"})
         monkeypatch.setenv("YANDEX_OAUTH_YANDEX_TOKEN", "rotated")
@@ -104,7 +104,7 @@ class TestSources:
         assert "rotated" not in json.dumps(entry)
 
     def test_missing_names_where_to_put_it(self, store):
-        from yandex_oauth import credential_status
+        from rb_yandex_oauth import credential_status
 
         entry = credential_status(store)
         assert entry["source_ref"].startswith("YANDEX_DEMO_TOKEN or YANDEX_OAUTH_YANDEX_REFRESH_TOKEN")

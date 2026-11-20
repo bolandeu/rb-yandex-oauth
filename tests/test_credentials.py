@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yandex_oauth import CredentialStore
+from rb_yandex_oauth import CredentialStore
 
 from .conftest import PROFILE
 

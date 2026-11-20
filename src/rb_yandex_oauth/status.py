@@ -6,9 +6,9 @@
   а `source`/`required` запись отчёта добавляет сам CLI —
 
       def health_check(self) -> Health:
-          return yandex_oauth.health_check(token_store.store, check=lambda: self.get_json("/counters"))
+          return rb_yandex_oauth.health_check(token_store.store, check=lambda: self.get_json("/counters"))
 
-  (`yandex_oauth.Health` совпадает по полям с `providers.base.Health` шаблона);
+  (`rb_yandex_oauth.Health` совпадает по полям с `providers.base.Health` шаблона);
 - инструмент на `make_auth_app`: команда `auth status` собирает весь отчёт из
   `credential_status` + `status_report`, а exit-код и ошибку `CREDENTIALS_UNHEALTHY` —
   из `status_exit_code` / `status_problems`.
@@ -27,7 +27,7 @@ import httpx
 from rb_credentials.status import (
     Health,
     HealthStatus,
-    Quota,  # noqa: F401 — public here since 0.1 (`yandex_oauth.Quota`)
+    Quota,  # noqa: F401 — public here since 0.1 (`rb_yandex_oauth.Quota`)
     entry,
     exit_code,
     iso,

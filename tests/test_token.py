@@ -8,9 +8,9 @@ from unittest.mock import patch
 
 import pytest
 
-from yandex_oauth import token as token_mod
-from yandex_oauth.errors import CliError
-from yandex_oauth.oauth import TokenSet
+from rb_yandex_oauth import token as token_mod
+from rb_yandex_oauth.errors import CliError
+from rb_yandex_oauth.oauth import TokenSet
 
 from .conftest import KEY
 
@@ -36,14 +36,14 @@ def _bag(
 class TestResolve:
     def test_far_from_expiry_no_refresh(self, fake_keyring, store):
         _bag(fake_keyring, expires_in_days=200)
-        with patch("yandex_oauth.oauth.refresh_access_token") as rf:
+        with patch("rb_yandex_oauth.oauth.refresh_access_token") as rf:
             tok, refreshable = store.resolve()
         assert tok == "old" and refreshable is True
         rf.assert_not_called()
 
     def test_expiring_soon_refreshes_and_stores(self, fake_keyring, store):
         _bag(fake_keyring, expires_in_days=10)
-        with patch("yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 3600)) as rf:
+        with patch("rb_yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 3600)) as rf:
             tok, _ = store.resolve()
         assert tok == "new"
         rf.assert_called_once_with("rt", "c", "s")
@@ -51,26 +51,26 @@ class TestResolve:
 
     def test_older_than_90_days_refreshes_even_if_far_from_expiry(self, fake_keyring, store):
         _bag(fake_keyring, expires_in_days=200, age_days=91)
-        with patch("yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 3600)) as rf:
+        with patch("rb_yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 3600)) as rf:
             tok, _ = store.resolve()
         assert tok == "new"
         rf.assert_called_once()
 
     def test_younger_than_90_days_no_refresh(self, fake_keyring, store):
         _bag(fake_keyring, expires_in_days=200, age_days=89)
-        with patch("yandex_oauth.oauth.refresh_access_token") as rf:
+        with patch("rb_yandex_oauth.oauth.refresh_access_token") as rf:
             store.resolve()
         rf.assert_not_called()
 
     def test_refresh_failure_keeps_old_token_if_still_valid(self, fake_keyring, store):
         _bag(fake_keyring, expires_in_days=10)
-        with patch("yandex_oauth.oauth.refresh_access_token", side_effect=CliError("OAUTH_REFRESH_FAILED", "down")):
+        with patch("rb_yandex_oauth.oauth.refresh_access_token", side_effect=CliError("OAUTH_REFRESH_FAILED", "down")):
             tok, _ = store.resolve()
         assert tok == "old"
 
     def test_refresh_failure_raises_if_expired(self, fake_keyring, store):
         _bag(fake_keyring, expires_in_days=-1)
-        with patch("yandex_oauth.oauth.refresh_access_token", side_effect=CliError("OAUTH_REFRESH_FAILED", "down")):
+        with patch("rb_yandex_oauth.oauth.refresh_access_token", side_effect=CliError("OAUTH_REFRESH_FAILED", "down")):
             with pytest.raises(CliError, match="down"):
                 store.resolve()
 
@@ -96,7 +96,7 @@ class TestResolve:
 
     def test_keychain_slot_is_shared_between_profiles(self, fake_keyring, store):
         """Один вход — все инструменты: другой профиль читает тот же слот."""
-        from yandex_oauth import CredentialStore, Profile, TokenStore
+        from rb_yandex_oauth import CredentialStore, Profile, TokenStore
 
         _bag(fake_keyring, expires_in_days=200)
         other = Profile(cli_name="other", token_env="YANDEX_OTHER_TOKEN", scopes="x", service="Другой")
@@ -125,13 +125,13 @@ class TestRetry:
     )
     def test_invalid_token_bodies_trigger_refresh(self, fake_keyring, store, body):
         _bag(fake_keyring, expires_in_days=200)
-        with patch("yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 3600)):
+        with patch("rb_yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 3600)):
             assert store.retry_token_after(403, body) == "new"
         assert json.loads(fake_keyring[KEY])["token"] == "new"
 
     def test_other_403_not_retried(self, fake_keyring, store):
         _bag(fake_keyring, expires_in_days=200)
-        with patch("yandex_oauth.oauth.refresh_access_token") as rf:
+        with patch("rb_yandex_oauth.oauth.refresh_access_token") as rf:
             assert store.retry_token_after(403, "forbidden: no rights") is None
             assert store.retry_token_after(401, "INVALID_OAUTH_TOKEN") is None
         rf.assert_not_called()

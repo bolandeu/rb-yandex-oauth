@@ -60,7 +60,7 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/yandex_oauth"]
+packages = ["src/rb_yandex_oauth"]
 
 [tool.pytest.ini_options]
 addopts = "--cov --cov-report=term-missing:skip-covered"

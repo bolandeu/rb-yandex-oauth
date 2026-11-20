@@ -6,8 +6,8 @@ import io
 import json
 from unittest.mock import patch
 
-from yandex_oauth.errors import CliError
-from yandex_oauth.oauth import TokenSet
+from rb_yandex_oauth.errors import CliError
+from rb_yandex_oauth.oauth import TokenSet
 
 from .conftest import KEY
 
@@ -73,8 +73,8 @@ class TestLogin:
         monkeypatch.setenv("YANDEX_CLIENT_ID", "cid")
         monkeypatch.setenv("YANDEX_CLIENT_SECRET", "sec")
         with (
-            patch("yandex_oauth.auth_command.webbrowser.open") as browser,
-            patch("yandex_oauth.oauth.exchange_code", return_value=TokenSet("fresh", "rt-1", 3600)) as exchange,
+            patch("rb_yandex_oauth.auth_command.webbrowser.open") as browser,
+            patch("rb_yandex_oauth.oauth.exchange_code", return_value=TokenSet("fresh", "rt-1", 3600)) as exchange,
         ):
             result = runner.invoke(app, ["auth", "login", "--json"], input="the-code\n")
         assert result.exit_code == 0, result.stdout
@@ -96,8 +96,8 @@ class TestLogin:
     def test_interactive_reuses_stored_client_creds(self, app, runner, fake_keyring):
         fake_keyring[KEY] = json.dumps({"token": "old", "client_id": "cid", "client_secret": "sec"})
         with (
-            patch("yandex_oauth.auth_command.webbrowser.open"),
-            patch("yandex_oauth.oauth.exchange_code", return_value=TokenSet("new", "rt", 100)) as exchange,
+            patch("rb_yandex_oauth.auth_command.webbrowser.open"),
+            patch("rb_yandex_oauth.oauth.exchange_code", return_value=TokenSet("new", "rt", 100)) as exchange,
         ):
             result = runner.invoke(app, ["auth", "login"], input="code\n")
         assert result.exit_code == 0, result.stdout
@@ -110,7 +110,7 @@ class TestLogin:
         assert _json(result)["refreshable"] is False
 
     def test_ask_drops_broken_utf8_bytes(self, monkeypatch):
-        from yandex_oauth.auth_command import _ask
+        from rb_yandex_oauth.auth_command import _ask
 
         monkeypatch.setattr("sys.stdin", io.TextIOWrapper(io.BytesIO(b"\xd12c8a9c2d\n"), encoding="utf-8"))
         assert _ask("Client ID") == "2c8a9c2d"
@@ -119,7 +119,7 @@ class TestLogin:
 class TestRefreshLogoutStatus:
     def test_refresh_command(self, app, runner, fake_keyring):
         fake_keyring[KEY] = json.dumps({"token": "old", "refresh_token": "rt", "client_id": "c", "client_secret": "s"})
-        with patch("yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 86400 * 365)) as rf:
+        with patch("rb_yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 86400 * 365)) as rf:
             result = runner.invoke(app, ["auth", "refresh", "--json"])
         assert result.exit_code == 0, result.stdout
         rf.assert_called_once_with("rt", "c", "s")

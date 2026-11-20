@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import typer
 
-from yandex_oauth.errors import CliError
+from rb_yandex_oauth.errors import CliError
 
 JsonOption = typer.Option(False, "--json", help="Emit machine-readable JSON output.")
 QuietOption = typer.Option(False, "--quiet", help="Suppress non-essential output.")

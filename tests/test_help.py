@@ -32,8 +32,8 @@ from syrupy.extensions.single_file import SingleFileSnapshotExtension, WriteMode
 from typer.models import ParameterInfo
 from typer.testing import CliRunner
 
-from yandex_oauth import CredentialStore, TokenStore
-from yandex_oauth.auth_command import make_auth_app
+from rb_yandex_oauth import CredentialStore, TokenStore
+from rb_yandex_oauth.auth_command import make_auth_app
 
 from . import fake_output
 from .conftest import PROFILE

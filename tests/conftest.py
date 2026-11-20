@@ -12,8 +12,8 @@ import pytest  # noqa: E402
 import typer  # noqa: E402
 from typer.testing import CliRunner  # noqa: E402
 
-from yandex_oauth import CredentialStore, Profile, TokenStore  # noqa: E402
-from yandex_oauth.auth_command import make_auth_app  # noqa: E402
+from rb_yandex_oauth import CredentialStore, Profile, TokenStore  # noqa: E402
+from rb_yandex_oauth.auth_command import make_auth_app  # noqa: E402
 
 from . import fake_output  # noqa: E402
 
@@ -34,9 +34,9 @@ def fake_keyring(monkeypatch: pytest.MonkeyPatch) -> dict[tuple[str, str], str]:
     def fake_delete_password(service: str, username: str) -> None:
         store.pop((service, username), None)
 
-    monkeypatch.setattr("yandex_oauth.credentials.keyring.set_password", fake_set_password)
-    monkeypatch.setattr("yandex_oauth.credentials.keyring.get_password", fake_get_password)
-    monkeypatch.setattr("yandex_oauth.credentials.keyring.delete_password", fake_delete_password)
+    monkeypatch.setattr("rb_yandex_oauth.credentials.keyring.set_password", fake_set_password)
+    monkeypatch.setattr("rb_yandex_oauth.credentials.keyring.get_password", fake_get_password)
+    monkeypatch.setattr("rb_yandex_oauth.credentials.keyring.delete_password", fake_delete_password)
     for var in list(os.environ):
         if var.startswith("YANDEX_"):
             monkeypatch.delenv(var)
@@ -88,7 +88,7 @@ def no_keychain(monkeypatch: pytest.MonkeyPatch) -> None:
         raise keyring.errors.NoKeyringError("No recommended backend was available.")
 
     for name in ("get_password", "set_password", "delete_password"):
-        monkeypatch.setattr(f"yandex_oauth.credentials.keyring.{name}", broken)
+        monkeypatch.setattr(f"rb_yandex_oauth.credentials.keyring.{name}", broken)
 
 
 @pytest.fixture
