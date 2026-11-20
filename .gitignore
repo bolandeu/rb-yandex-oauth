@@ -10,3 +10,5 @@ dist/
 htmlcov/
 .DS_Store
 Thumbs.db
+.pdm-build/
+.cache/
