@@ -119,7 +119,9 @@ class TestLogin:
 class TestRefreshLogoutStatus:
     def test_refresh_command(self, app, runner, fake_keyring):
         fake_keyring[KEY] = json.dumps({"token": "old", "refresh_token": "rt", "client_id": "c", "client_secret": "s"})
-        with patch("rb_yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 86400 * 365)) as rf:
+        with patch(
+            "rb_yandex_oauth.oauth.refresh_access_token", return_value=TokenSet("new", "rt2", 86400 * 365)
+        ) as rf:
             result = runner.invoke(app, ["auth", "refresh", "--json"])
         assert result.exit_code == 0, result.stdout
         rf.assert_called_once_with("rt", "c", "s")
