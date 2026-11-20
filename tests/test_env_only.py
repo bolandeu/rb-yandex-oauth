@@ -100,7 +100,7 @@ class TestStatus:
     def test_missing_without_keychain(self, no_keychain, store):
         entry = credential_status(store)
         assert entry["source"] == "missing" and entry["status"] == "missing"
-        assert "Keychain недоступен" in entry["message"] and "YANDEX_OAUTH_YANDEX_REFRESH_TOKEN" in entry["message"]
+        assert "Keychain unavailable" in entry["message"] and "YANDEX_OAUTH_YANDEX_REFRESH_TOKEN" in entry["message"]
 
     def test_env_presence_without_network(self, no_keychain, env_creds, store):
         with patch(REFRESH) as refresh:
